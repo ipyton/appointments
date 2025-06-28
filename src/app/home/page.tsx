@@ -31,6 +31,22 @@ export default function HomePage() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
+                {user.role === "provider" && (
+                  <Link 
+                    href="/provider"
+                    className="text-green-600 hover:text-green-500 font-medium"
+                  >
+                    Provider Dashboard
+                  </Link>
+                )}
+                {user.role === "user" && (
+                  <Link 
+                    href="/user"
+                    className="text-blue-600 hover:text-blue-500 font-medium"
+                  >
+                    User Dashboard
+                  </Link>
+                )}
                 <Link 
                   href="/profile"
                   className="text-blue-600 hover:text-blue-500 font-medium"
