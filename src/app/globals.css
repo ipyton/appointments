@@ -15,7 +15,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #ffffff;
   }
 }
 
@@ -23,4 +23,92 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Improved text visibility */
+p, h1, h2, h3, h4, h5, h6, span, a, li {
+  color: inherit;
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bg-white {
+    background-color: #1a1a1a;
+  }
+  
+  .bg-gray-50 {
+    background-color: #121212;
+  }
+  
+  .text-gray-600, .text-gray-500, .text-gray-400 {
+    color: #d1d1d1;
+  }
+  
+  .text-blue-600 {
+    color: #3b82f6;
+  }
+  
+  .text-green-600 {
+    color: #10b981;
+  }
+
+  .text-indigo-600 {
+    color: #6366f1;
+  }
+  
+  .bg-blue-50, .bg-green-50, .bg-purple-100, .bg-blue-100, .bg-green-100, .bg-indigo-50, .bg-indigo-100 {
+    background-color: #1a1a1a;
+  }
+
+  /* Improved card visibility in dark mode */
+  .text-gray-700, .text-gray-800, .text-gray-900 {
+    color: #e5e5e5;
+  }
+
+  /* Better button visibility in dark mode */
+  .bg-white.text-blue-700 {
+    background-color: #3b82f6;
+    color: white;
+  }
+
+  /* Registration/Login form improvements */
+  input[type="text"], 
+  input[type="email"], 
+  input[type="password"] {
+    background-color: #2a2a2a;
+    color: white;
+    border-color: #3f3f3f;
+  }
+  
+  input::placeholder {
+    color: #9ca3af; /* gray-400 */
+  }
+
+  /* Form validation errors */
+  .bg-red-50 {
+    background-color: rgba(220, 38, 38, 0.1);
+  }
+  
+  .text-red-700 {
+    color: #ef4444;
+  }
+
+  /* Improved contrast for hover states */
+  .hover\:bg-blue-50:hover, .hover\:bg-white\/10:hover, .hover\:bg-white\/20:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Role selection cards in dark mode */
+  .bg-gray-100 {
+    background-color: #2a2a2a;
+  }
 }
