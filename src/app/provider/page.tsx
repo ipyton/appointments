@@ -2,6 +2,17 @@
 
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { 
+  CalendarIcon, 
+  InboxIcon, 
+  DocumentDuplicateIcon, 
+  PlusCircleIcon,
+  ArrowUpIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  CurrencyDollarIcon
+} from "@heroicons/react/24/outline";
 
 export default function ProviderDashboardPage() {
   const { user } = useAuth();
@@ -22,168 +33,240 @@ export default function ProviderDashboardPage() {
       title: "Calendar",
       description: "View your appointment schedule",
       link: "/provider/calendar",
-      color: "bg-blue-50 border-blue-500",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      )
+      color: "bg-blue-50 text-blue-700",
+      icon: <CalendarIcon className="h-6 w-6" />
     },
     {
       title: "Invitations",
       description: "Manage appointment requests",
       link: "/provider/invitations",
-      color: "bg-yellow-50 border-yellow-500",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      )
+      color: "bg-yellow-50 text-yellow-700",
+      icon: <InboxIcon className="h-6 w-6" />
     },
     {
       title: "Events",
       description: "Manage your available services",
       link: "/provider/events",
-      color: "bg-green-50 border-green-500",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      )
+      color: "bg-green-50 text-green-700",
+      icon: <DocumentDuplicateIcon className="h-6 w-6" />
     },
     {
       title: "Create Event",
       description: "Add new appointment options",
       link: "/provider/create-event",
-      color: "bg-purple-50 border-purple-500",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-      )
+      color: "bg-purple-50 text-purple-700",
+      icon: <PlusCircleIcon className="h-6 w-6" />
     }
   ];
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100
+      }
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Provider Dashboard</h1>
-        <div className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900">Provider Dashboard</h1>
+        <div className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </div>
 
       {/* Welcome Card */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 text-white">
+      <motion.div 
+        variants={itemVariants}
+        className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white relative overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 -mt-4 -mr-16 opacity-20">
+          <CalendarIcon className="h-32 w-32" />
+        </div>
         <h2 className="text-xl font-semibold mb-2">Welcome back, {user?.name}!</h2>
-        <p className="opacity-90">
+        <p className="opacity-90 max-w-lg">
           You have {stats.pendingInvitations} pending appointment requests and {stats.upcomingToday} appointments scheduled for today.
         </p>
-      </div>
+        <div className="mt-4 flex space-x-4">
+          <Link href="/provider/invitations" className="inline-flex items-center px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors">
+            View Requests
+            <ArrowUpIcon className="ml-1 h-4 w-4 rotate-45" />
+          </Link>
+          <Link href="/provider/calendar" className="inline-flex items-center px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors">
+            Today's Schedule
+            <ArrowUpIcon className="ml-1 h-4 w-4 rotate-45" />
+          </Link>
+        </div>
+      </motion.div>
 
       {/* Quick Access Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div 
+        variants={containerVariants}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {quickAccessCards.map((card, index) => (
-          <Link 
-            key={index} 
-            href={card.link}
-            className={`block p-4 rounded-lg shadow border-l-4 ${card.color} hover:shadow-md transition-shadow`}
-          >
-            <div className="flex items-center space-x-4">
-              <div>
-                {card.icon}
+          <motion.div key={index} variants={itemVariants}>
+            <Link 
+              href={card.link}
+              className={`block p-5 rounded-xl shadow-sm hover:shadow-md transition-all ${card.color} border border-opacity-10`}
+            >
+              <div className="flex items-center space-x-4">
+                <div className="bg-white p-2 rounded-lg shadow-sm">
+                  {card.icon}
+                </div>
+                <div>
+                  <h3 className="font-medium text-lg">{card.title}</h3>
+                  <p className="text-sm opacity-75">{card.description}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium">{card.title}</h3>
-                <p className="text-sm text-gray-600">{card.description}</p>
-              </div>
-            </div>
-          </Link>
+            </Link>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-1">Total Appointments</h3>
-          <p className="text-2xl font-bold">{stats.totalAppointments}</p>
-          <div className="mt-2 text-xs text-green-600">
-            +12% from last month
+      <motion.div 
+        variants={containerVariants}
+        className="grid grid-cols-1 md:grid-cols-4 gap-4"
+      >
+        <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-5">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Total Appointments</p>
+              <h3 className="text-2xl font-bold text-gray-900">{stats.totalAppointments}</h3>
+            </div>
+            <span className="bg-blue-100 p-2 rounded-lg text-blue-600">
+              <CalendarIcon className="h-5 w-5" />
+            </span>
           </div>
-        </div>
+          <div className="mt-2 flex items-center text-xs text-green-600">
+            <ArrowUpIcon className="h-3 w-3 mr-1" />
+            <span>12% from last month</span>
+          </div>
+        </motion.div>
         
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-1">Active Events</h3>
-          <p className="text-2xl font-bold">{stats.activeEvents}</p>
-          <div className="mt-2 text-xs text-blue-600">
-            {stats.activeEvents} services available
+        <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-5">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Pending Invitations</p>
+              <h3 className="text-2xl font-bold text-gray-900">{stats.pendingInvitations}</h3>
+            </div>
+            <span className="bg-yellow-100 p-2 rounded-lg text-yellow-600">
+              <InboxIcon className="h-5 w-5" />
+            </span>
           </div>
-        </div>
+          <div className="mt-2 flex items-center text-xs text-yellow-600">
+            <ClockIcon className="h-3 w-3 mr-1" />
+            <span>Awaiting response</span>
+          </div>
+        </motion.div>
         
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-1">Total Revenue</h3>
-          <p className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</p>
-          <div className="mt-2 text-xs text-green-600">
-            +5% from last month
+        <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-5">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Active Events</p>
+              <h3 className="text-2xl font-bold text-gray-900">{stats.activeEvents}</h3>
+            </div>
+            <span className="bg-green-100 p-2 rounded-lg text-green-600">
+              <DocumentDuplicateIcon className="h-5 w-5" />
+            </span>
           </div>
-        </div>
-      </div>
+          <div className="mt-2 flex items-center text-xs text-blue-600">
+            <CheckCircleIcon className="h-3 w-3 mr-1" />
+            <span>{stats.activeEvents} services available</span>
+          </div>
+        </motion.div>
+        
+        <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-5">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Total Revenue</p>
+              <h3 className="text-2xl font-bold text-gray-900">${stats.totalRevenue.toFixed(2)}</h3>
+            </div>
+            <span className="bg-purple-100 p-2 rounded-lg text-purple-600">
+              <CurrencyDollarIcon className="h-5 w-5" />
+            </span>
+          </div>
+          <div className="mt-2 flex items-center text-xs text-green-600">
+            <ArrowUpIcon className="h-3 w-3 mr-1" />
+            <span>5% from last month</span>
+          </div>
+        </motion.div>
+      </motion.div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-4 border-b">
-          <h2 className="font-medium">Recent Activity</h2>
+      <motion.div 
+        variants={itemVariants}
+        className="bg-white rounded-xl shadow-sm overflow-hidden"
+      >
+        <div className="p-5 border-b border-gray-100">
+          <h2 className="font-medium text-lg">Recent Activity</h2>
         </div>
-        <div className="divide-y">
-          <div className="p-4 flex items-start">
-            <div className="flex-shrink-0 mr-3">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+        <div className="divide-y divide-gray-100">
+          <div className="p-5 flex items-start hover:bg-gray-50 transition-colors">
+            <div className="flex-shrink-0 mr-4">
+              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircleIcon className="h-5 w-5 text-green-600" />
               </div>
             </div>
             <div>
-              <p className="font-medium">New appointment confirmed</p>
+              <p className="font-medium text-gray-900">New appointment confirmed</p>
               <p className="text-sm text-gray-600">Jane Smith booked a Hair Cut for Oct 22, 2023</p>
               <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
             </div>
           </div>
-          <div className="p-4 flex items-start">
-            <div className="flex-shrink-0 mr-3">
-              <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+          <div className="p-5 flex items-start hover:bg-gray-50 transition-colors">
+            <div className="flex-shrink-0 mr-4">
+              <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                <ClockIcon className="h-5 w-5 text-yellow-600" />
               </div>
             </div>
             <div>
-              <p className="font-medium">Appointment request received</p>
+              <p className="font-medium text-gray-900">Appointment request received</p>
               <p className="text-sm text-gray-600">Mike Johnson requested a Consultation</p>
               <p className="text-xs text-gray-500 mt-1">5 hours ago</p>
             </div>
           </div>
-          <div className="p-4 flex items-start">
-            <div className="flex-shrink-0 mr-3">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+          <div className="p-5 flex items-start hover:bg-gray-50 transition-colors">
+            <div className="flex-shrink-0 mr-4">
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <DocumentDuplicateIcon className="h-5 w-5 text-blue-600" />
               </div>
             </div>
             <div>
-              <p className="font-medium">Event updated</p>
+              <p className="font-medium text-gray-900">Event updated</p>
               <p className="text-sm text-gray-600">You updated the details for "Massage Therapy"</p>
               <p className="text-xs text-gray-500 mt-1">Yesterday</p>
             </div>
           </div>
         </div>
-        <div className="p-3 bg-gray-50 text-center">
-          <Link href="#" className="text-sm text-blue-600 hover:text-blue-800">
+        <div className="p-4 bg-gray-50 text-center">
+          <Link href="#" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
             View all activity
           </Link>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 } 
