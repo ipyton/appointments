@@ -1,0 +1,12 @@
+name = "appointments"
+compatibility_date = "2025-03-25"
+compatibility_flags = ["nodejs_compat"]
+
+[[services]]
+binding = "NEXT_ORIGIN"
+service = "appointments-server"
+
+[env.production]
+services = [
+  { binding = "NEXT_ORIGIN", service = "appointments-server" }
+]
