@@ -12,22 +12,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ffffff;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Improved text visibility */
-p, h1, h2, h3, h4, h5, h6, span, a, li {
-  color: inherit;
 }
 
 /* Custom animations */
@@ -40,23 +28,106 @@ p, h1, h2, h3, h4, h5, h6, span, a, li {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
+/* Light mode specific styles */
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+
+  /* Only apply dark text to elements NOT in colored backgrounds */
+  .bg-white .text-gray-500, 
+  .bg-gray-50 .text-gray-500,
+  .bg-blue-50 .text-gray-500,
+  .bg-green-50 .text-gray-500 {
+    color: #6b7280 !important; /* gray-500 */
+  }
+
+  .bg-white .text-gray-600, 
+  .bg-gray-50 .text-gray-600,
+  .bg-blue-50 .text-gray-600,
+  .bg-green-50 .text-gray-600 {
+    color: #4b5563 !important; /* gray-600 */
+  }
+
+  .bg-white .text-gray-700, 
+  .bg-gray-50 .text-gray-700,
+  .bg-blue-50 .text-gray-700,
+  .bg-green-50 .text-gray-700 {
+    color: #374151 !important; /* gray-700 */
+  }
+
+  .bg-white .text-gray-800, 
+  .bg-gray-50 .text-gray-800,
+  .bg-blue-50 .text-gray-800,
+  .bg-green-50 .text-gray-800 {
+    color: #1f2937 !important; /* gray-800 */
+  }
+
+  /* Headers in light backgrounds */
+  .bg-white h1, .bg-white h2, .bg-white h3, .bg-white h4, .bg-white h5, .bg-white h6,
+  .bg-gray-50 h1, .bg-gray-50 h2, .bg-gray-50 h3, .bg-gray-50 h4, .bg-gray-50 h5, .bg-gray-50 h6,
+  .bg-blue-50 h1, .bg-blue-50 h2, .bg-blue-50 h3, .bg-blue-50 h4, .bg-blue-50 h5, .bg-blue-50 h6,
+  .bg-green-50 h1, .bg-green-50 h2, .bg-green-50 h3, .bg-green-50 h4, .bg-green-50 h5, .bg-green-50 h6 {
+    color: #1f2937 !important; /* gray-800 */
+  }
+
+  /* Text in light backgrounds only */
+  .bg-white p, .bg-white span, .bg-white li,
+  .bg-gray-50 p, .bg-gray-50 span, .bg-gray-50 li,
+  .bg-blue-50 p, .bg-blue-50 span, .bg-blue-50 li,
+  .bg-green-50 p, .bg-green-50 span, .bg-green-50 li {
+    color: #374151 !important; /* gray-700 */
+  }
+
+  /* Preserve white text in colored backgrounds */
+  .bg-gradient-to-r p, .bg-gradient-to-r span, .bg-gradient-to-r h1,
+  .bg-blue-600 p, .bg-blue-600 span, .bg-blue-600 h1, .bg-blue-600 h2,
+  .bg-indigo-700 p, .bg-indigo-700 span, .bg-indigo-700 h1,
+  .bg-green-600 p, .bg-green-600 span, .bg-green-600 h1,
+  .bg-gray-800 p, .bg-gray-800 span, .bg-gray-800 h1, .bg-gray-800 h2, .bg-gray-800 h3, .bg-gray-800 h4 {
+    color: white !important;
+  }
+
+  /* Footer specific - light text on dark background */
+  .bg-gray-800 h3, .bg-gray-800 h4, .bg-gray-800 a, .bg-gray-800 li,
+  .bg-gray-800 .text-gray-300 {
+    color: #d1d5db !important; /* light gray for dark footer */
+  }
+
+  /* Button text colors */
+  .bg-blue-600, .bg-green-600, .bg-indigo-600, .bg-blue-700, .bg-green-700 {
+    color: white !important;
+  }
+
+  .bg-white.text-blue-700, .text-blue-700 {
+    color: #1d4ed8 !important;
+  }
+}
+
+/* Dark mode specific styles */
 @media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ffffff;
+  }
+
   .bg-white {
     background-color: #1a1a1a;
   }
-  
+
   .bg-gray-50 {
     background-color: #121212;
   }
-  
+
   .text-gray-600, .text-gray-500, .text-gray-400 {
     color: #d1d1d1;
   }
-  
+
   .text-blue-600 {
     color: #3b82f6;
   }
-  
+
   .text-green-600 {
     color: #10b981;
   }
@@ -64,7 +135,7 @@ p, h1, h2, h3, h4, h5, h6, span, a, li {
   .text-indigo-600 {
     color: #6366f1;
   }
-  
+
   .bg-blue-50, .bg-green-50, .bg-purple-100, .bg-blue-100, .bg-green-100, .bg-indigo-50, .bg-indigo-100 {
     background-color: #1a1a1a;
   }
@@ -81,14 +152,14 @@ p, h1, h2, h3, h4, h5, h6, span, a, li {
   }
 
   /* Registration/Login form improvements */
-  input[type="text"], 
-  input[type="email"], 
+  input[type="text"],
+  input[type="email"],
   input[type="password"] {
     background-color: #2a2a2a;
     color: white;
     border-color: #3f3f3f;
   }
-  
+
   input::placeholder {
     color: #9ca3af; /* gray-400 */
   }
@@ -97,7 +168,7 @@ p, h1, h2, h3, h4, h5, h6, span, a, li {
   .bg-red-50 {
     background-color: rgba(220, 38, 38, 0.1);
   }
-  
+
   .text-red-700 {
     color: #ef4444;
   }
@@ -106,7 +177,7 @@ p, h1, h2, h3, h4, h5, h6, span, a, li {
   .hover\:bg-blue-50:hover, .hover\:bg-white\/10:hover, .hover\:bg-white\/20:hover {
     background-color: rgba(255, 255, 255, 0.2);
   }
-  
+
   /* Role selection cards in dark mode */
   .bg-gray-100 {
     background-color: #2a2a2a;
