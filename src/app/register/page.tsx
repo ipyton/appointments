@@ -14,6 +14,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [terms, setTerms] = useState(false);
   const [role, setRole] = useState<"user" | "provider">("user");
   const [error, setError] = useState("");
 
@@ -27,6 +28,10 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if(!terms){
+      setError("Please agree to the terms and conditions");
+      return;
+    }
     
     // Validation
     if (!name || !email || !password || !confirmPassword) {
@@ -40,8 +45,11 @@ export default function Register() {
     }
     
     try {
-      await register(name, email, password, role);
-      router.push("/home");
+      console.log({name, email, password, role})
+      register(name, email, password, role).then(()=>{
+        router.push("/login");
+
+      })
     } catch (_) {
       setError("Failed to register. Please try again.");
     }
@@ -263,6 +271,8 @@ export default function Register() {
                 <input
                   id="terms"
                   name="terms"
+                  checked={terms}
+                  onChange={(e) => setTerms(e.target.checked)}
                   type="checkbox"
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded transition duration-150 ease-in-out"
                 />

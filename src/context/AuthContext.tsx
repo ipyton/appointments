@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { URL } from "../apis/URL";
 
 type UserRole = "user" | "provider" | null;
 
@@ -42,12 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
-    fetch("http://localhost:3000/api/auth/login", {
+    fetch(URL + "/account/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     })
     .then(res => res.json())
     .then(data => {
+      console.log(data)
       setUser(data);  
       localStorage.setItem("user", JSON.stringify(data));
       setIsLoading(false);
@@ -73,16 +75,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Mock user creation
-    const mockUser: AuthUser = {
-      id: `user-${Date.now()}`,
-      name,
-      email,
-      role
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem("user", JSON.stringify(mockUser));
+
+    fetch(URL + "/account/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ FullName:name, Email:email, password:password, Role:role }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      setUser(data);
+      localStorage.setItem("user", JSON.stringify(data));
+      setIsLoading(false);
+    })
+    .catch(error => {
+      console.error("Registration failed:", error);
+      setIsLoading(false);
+    });
     setIsLoading(false);
   };
 
