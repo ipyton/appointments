@@ -2,8 +2,50 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { URL } from "@/apis/URL";
+import Auth from "@/apis/Auth";
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check login status when the page loads
+    const checkLoginStatus = async () => {
+      try {
+        // Get token from localStorage
+        const storedUser = localStorage.getItem("user");
+        
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          
+          // Validate token with backend
+          const response = await Auth.validateToken(user.token);
+          
+          if (response.ok) {
+            // Token is valid, redirect based on user role
+            if (user.role === "provider") {
+              router.push("/provider");
+            } else if (user.role === "user") {
+              router.push("/user");
+            } else {
+              router.push("/home");
+            }
+          } else {
+            // Token is invalid, remove from localStorage
+            localStorage.removeItem("user");
+          }
+        }
+      } catch (error) {
+        console.error("Error validating token:", error);
+        localStorage.removeItem("user");
+      }
+    };
+    
+    checkLoginStatus();
+  }, [router]);
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
@@ -14,19 +56,19 @@ export default function Home() {
             <span className="text-xl font-bold">AppointEase</span>
           </div>
           <div className="hidden md:flex items-center space-x-6">
-            <Link 
+            <Link
               href="/features"
               className="text-white hover:text-blue-200 transition-colors"
             >
               Features
             </Link>
-            <Link 
+            <Link
               href="/pricing"
               className="text-white hover:text-blue-200 transition-colors"
             >
               Pricing
             </Link>
-            <Link 
+            <Link
               href="/faq"
               className="text-white hover:text-blue-200 transition-colors"
             >
@@ -34,15 +76,15 @@ export default function Home() {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <Link 
+            <Link
               href="/login"
               className="px-4 py-2 rounded-md hover:bg-white/10 transition-colors"
             >
               Login
             </Link>
-            <Link 
+            <Link
               href="/register"
-              className="px-4 py-2 bg-white text-blue-700 rounded-md hover:bg-blue-50 transition-colors"
+              className="px-4 py-2 bg-white text-blue-700 rounded-md hover:bg-blue-50 transition-colors font-medium"
             >
               Register
             </Link>
@@ -56,16 +98,16 @@ export default function Home() {
               Simplify Your Appointment Scheduling
             </h1>
             <p className="text-xl mb-8 text-white">
-            A seamless platform connecting service providers with users for effortless appointment booking and management.
+              A seamless platform connecting service providers with users for effortless appointment booking and management.
             </p>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              <Link 
+              <Link
                 href="/register?role=user"
                 className="px-8 py-3 bg-white text-blue-700 rounded-lg font-semibold text-center hover:bg-blue-50 transition-colors"
               >
                 Book an Appointment
               </Link>
-              <Link 
+              <Link
                 href="/register?role=provider"
                 className="px-8 py-3 border border-white text-white rounded-lg font-semibold text-center hover:bg-white/20 transition-colors"
               >
@@ -118,7 +160,7 @@ export default function Home() {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-16 text-gray-800">How AppointEase Works</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {/* Feature 1 */}
             <div className="flex flex-col items-center text-center">
@@ -166,7 +208,7 @@ export default function Home() {
       <section className="py-16 bg-white">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-16 text-gray-800">Who Uses AppointEase?</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* For Users */}
             <div className="bg-blue-50 rounded-xl p-8 flex flex-col h-full shadow-sm">
@@ -204,7 +246,7 @@ export default function Home() {
                   <span className="text-gray-700 font-medium">Easily reschedule or cancel when needed</span>
                 </li>
               </ul>
-              <Link 
+              <Link
                 href="/register?role=user"
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-center hover:bg-blue-700 transition-colors w-full"
               >
@@ -248,7 +290,7 @@ export default function Home() {
                   <span className="text-gray-700 font-medium">Insights and analytics to grow your business</span>
                 </li>
               </ul>
-              <Link 
+              <Link
                 href="/register?role=provider"
                 className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold text-center hover:bg-green-700 transition-colors w-full"
               >
@@ -263,7 +305,7 @@ export default function Home() {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-16 text-gray-800">What Our Users Say</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Testimonial 1 */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -324,13 +366,13 @@ export default function Home() {
             Join thousands of satisfied users who have simplified their scheduling with AppointEase.
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link 
+            <Link
               href="/register"
-              className="px-8 py-3 bg-white text-blue-700 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              className="px-8 py-3 bg-white text-blue-700 rounded-lg font-bold hover:bg-blue-50 transition-colors"
             >
               Get Started For Free
             </Link>
-            <Link 
+            <Link
               href="/login"
               className="px-8 py-3 border border-white text-white rounded-lg font-semibold hover:bg-white/20 transition-colors"
             >
@@ -346,11 +388,11 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-lg font-bold mb-4">AppointEase</h3>
-              <p className="text-gray-300" style={{color: '#d1d5db'}}>
-              Simplifying appointment scheduling for businesses and clients worldwide.
+              <p className="text-gray-300" style={{ color: '#d1d5db' }}>
+                Simplifying appointment scheduling for businesses and clients worldwide.
               </p>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-bold mb-4">Quick Links</h4>
               <ul className="space-y-2">
@@ -360,7 +402,7 @@ export default function Home() {
                 <li><a href="#" className="text-gray-400 hover:text-gray-200 transition-colors">FAQ</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-bold mb-4">Legal</h4>
               <ul className="space-y-2">
@@ -369,7 +411,7 @@ export default function Home() {
                 <li><a href="#" className="text-gray-400 hover:text-gray-200 transition-colors">Cookie Policy</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-bold mb-4">Contact</h4>
               <ul className="space-y-2">
@@ -409,7 +451,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300 text-sm">
             <p className="text-gray-400">© {new Date().getFullYear()} AppointEase. All rights reserved.</p>
           </div>
