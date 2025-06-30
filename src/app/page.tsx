@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,6 +12,26 @@ export default function Home() {
         <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <span className="text-xl font-bold">AppointEase</span>
+          </div>
+          <div className="hidden md:flex items-center space-x-6">
+            <Link 
+              href="/features"
+              className="text-white hover:text-blue-200 transition-colors"
+            >
+              Features
+            </Link>
+            <Link 
+              href="/pricing"
+              className="text-white hover:text-blue-200 transition-colors"
+            >
+              Pricing
+            </Link>
+            <Link 
+              href="/faq"
+              className="text-white hover:text-blue-200 transition-colors"
+            >
+              FAQ
+            </Link>
           </div>
           <div className="flex items-center space-x-4">
             <Link 
