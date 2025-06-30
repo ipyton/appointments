@@ -7,18 +7,17 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function Login() {
-  const { login, isLoading, user } = useAuth();
+  const { login, isLoading, user, checkLoginStatus } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
-  // Redirect if already logged in
+  const [rememberMe, setRememberMe] = useState(false);
+  
+  // Check login status on page load
   useEffect(() => {
-    if (user) {
-      router.push("/home");
-    }
-  }, [user, router]);
+    checkLoginStatus();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +29,15 @@ export default function Login() {
     }
     
     try {
-      await login(email, password);
-      router.push("/home");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_) {
-      setError("Failed to log in. Please check your credentials.");
+      // Use the updated login function that returns success status and error message
+      const result = await login(email, password, rememberMe);
+      
+      if (!result.success) {
+        setError(result.message || "Failed to log in. Please check your credentials.");
+      }
+      // No need to redirect here as AuthContext handles it
+    } catch (error) {
+      setError("An unexpected error occurred. Please try again later.");
     }
   };
 
@@ -165,6 +168,8 @@ export default function Login() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition duration-150 ease-in-out"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-800">

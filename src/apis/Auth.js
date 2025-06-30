@@ -1,10 +1,10 @@
 import { URL } from "./URL";
 
 export default class Auth {
-    static async login(email, password) {
+    static async login(email, password, rememberMe) {
         const response = await fetch(`${URL}/login`, {
             method: 'POST',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, rememberMe }),
         });
     }
 
@@ -23,11 +23,12 @@ export default class Auth {
 
 
     static async validateToken(token) {
-        return fetch(`${URL}/validate-token`, {
-            method: 'GET',
+        return fetch(`${URL}/token/validate`, {
+            method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ Token: token }),
         });
     }
 }

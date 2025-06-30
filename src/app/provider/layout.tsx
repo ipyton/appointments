@@ -13,8 +13,10 @@ import {
   DocumentDuplicateIcon,
   PlusCircleIcon,
   UserCircleIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  ChatBubbleLeftRightIcon
 } from "@heroicons/react/24/outline";
+import ChatBox from "@/components/ChatBox";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -35,8 +37,9 @@ export default function ProviderLayout({
     
     // Redirect if not logged in or not a provider
     if (!user) {
+      console.log("no user");
       router.push("/login");
-    } else if (user.role !== "provider") {
+    } else if (user.role !== "ServiceProvider") {
       router.push("/home");
     }
   }, [user, router]);
@@ -46,7 +49,7 @@ export default function ProviderLayout({
     router.push("/login");
   };
 
-  if (!user || user.role !== "provider") {
+  if (!user || user.role !== "ServiceProvider") {
     return null; // Don't render anything while redirecting
   }
 
@@ -55,6 +58,7 @@ export default function ProviderLayout({
     { name: 'Appointment Invitations', href: '/provider/invitations', icon: InboxIcon },
     { name: 'Available Events', href: '/provider/events', icon: DocumentDuplicateIcon },
     { name: 'Create Event', href: '/provider/create-event', icon: PlusCircleIcon },
+    { name: 'Customer Chat', href: '/provider/chat', icon: ChatBubbleLeftRightIcon },
   ];
 
   return (
@@ -232,6 +236,9 @@ export default function ProviderLayout({
           </main>
         </div>
       </div>
+
+      {/* Chat Box Component */}
+      <ChatBox />
     </div>
   );
 } 

@@ -30,11 +30,15 @@ export default function ForgotPassword() {
     }
     
     try {
-      await resetPassword(email);
-      setSuccessMessage("Password reset instructions have been sent to your email");
-      setEmail("");
-    } catch (_) {
-      setError("Failed to send password reset email. Please try again.");
+      const result = await resetPassword(email);
+      if (result.success) {
+        setSuccessMessage("Password reset instructions have been sent to your email");
+        setEmail("");
+      } else {
+        setError(result.message || "Failed to send password reset email. Please try again.");
+      }
+    } catch (error) {
+      setError("An unexpected error occurred. Please try again later.");
     }
   };
 

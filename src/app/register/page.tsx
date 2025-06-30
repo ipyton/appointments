@@ -15,7 +15,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [terms, setTerms] = useState(false);
-  const [role, setRole] = useState<"user" | "provider">("user");
+  const [role, setRole] = useState<"User" | "ServiceProvider">("User");
   const [error, setError] = useState("");
 
   // Redirect if already logged in
@@ -45,13 +45,14 @@ export default function Register() {
     }
     
     try {
-      console.log({name, email, password, role})
-      register(name, email, password, role).then(()=>{
+      const result = await register(name, email, password, role);
+      if (!result.success) {
+        setError(result.message || "Failed to register. Please try again.");
+      } else {
         router.push("/login");
-
-      })
-    } catch (_) {
-      setError("Failed to register. Please try again.");
+      }
+    } catch (error) {
+      setError("An unexpected error occurred. Please try again later.");
     }
   };
 
@@ -70,7 +71,7 @@ export default function Register() {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="w-20 h-20 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-4">
-                {role === "user" ? (
+                {role === "User" ? (
                   <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                   </svg>
@@ -81,10 +82,10 @@ export default function Register() {
                 )}
               </div>
               <h3 className="text-xl font-semibold mb-1">
-                {role === "user" ? "Client Account" : "Service Provider"}
+                {role === "User" ? "Client Account" : "Service Provider"}
               </h3>
               <p className="text-sm text-indigo-100">
-                {role === "user" 
+                {role === "User" 
                   ? "Book services with your favorite providers" 
                   : "Manage your business and appointments"}
               </p>
@@ -158,35 +159,35 @@ export default function Register() {
                 <div className="grid grid-cols-2 gap-3">
                   <div
                     className={`flex flex-col items-center justify-center p-4 border rounded-md cursor-pointer transition duration-200 ease-in-out ${
-                      role === "user"
+                      role === "User"
                         ? "bg-indigo-50 border-indigo-500 ring-2 ring-indigo-500"
                         : "border-gray-300 hover:border-indigo-500"
                     }`}
-                    onClick={() => setRole("user")}
+                    onClick={() => setRole("User")}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${role === "user" ? "bg-indigo-100" : "bg-gray-100"}`}>
-                      <svg className={`w-6 h-6 ${role === "user" ? "text-indigo-600" : "text-gray-500"}`} fill="currentColor" viewBox="0 0 20 20">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${role === "User" ? "bg-indigo-100" : "bg-gray-100"}`}>
+                      <svg className={`w-6 h-6 ${role === "User" ? "text-indigo-600" : "text-gray-500"}`} fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>
                     </div>
-                    <span className={`text-sm font-semibold ${role === "user" ? "text-indigo-700" : "text-gray-800"}`}>Client</span>
+                    <span className={`text-sm font-semibold ${role === "User" ? "text-indigo-700" : "text-gray-800"}`}>Client</span>
                   </div>
                   
                   <div
                     className={`flex flex-col items-center justify-center p-4 border rounded-md cursor-pointer transition duration-200 ease-in-out ${
-                      role === "provider"
+                      role === "ServiceProvider"
                         ? "bg-indigo-50 border-indigo-500 ring-2 ring-indigo-500"
                         : "border-gray-300 hover:border-indigo-500"
                     }`}
-                    onClick={() => setRole("provider")}
+                    onClick={() => setRole("ServiceProvider")}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${role === "provider" ? "bg-indigo-100" : "bg-gray-100"}`}>
-                      <svg className={`w-6 h-6 ${role === "provider" ? "text-indigo-600" : "text-gray-500"}`} fill="currentColor" viewBox="0 0 20 20">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${role === "ServiceProvider" ? "bg-indigo-100" : "bg-gray-100"}`}>
+                      <svg className={`w-6 h-6 ${role === "ServiceProvider" ? "text-indigo-600" : "text-gray-500"}`} fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
                         <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
                       </svg>
                     </div>
-                    <span className={`text-sm font-semibold ${role === "provider" ? "text-indigo-700" : "text-gray-800"}`}>Service Provider</span>
+                    <span className={`text-sm font-semibold ${role === "ServiceProvider" ? "text-indigo-700" : "text-gray-800"}`}>Service Provider</span>
                   </div>
                 </div>
               </div>

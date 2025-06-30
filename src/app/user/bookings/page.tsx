@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 
 // Mock bookings data - same as in calendar page
@@ -11,36 +12,42 @@ const MOCK_BOOKINGS = [
     eventId: "1",
     title: "Dental Checkup",
     provider: "Dr. Smith",
+    publisher: "Metro Health Clinic",
     date: "2023-06-15",
     time: "10:00 AM",
     duration: 30,
     status: "confirmed",
     price: 75,
-    location: "123 Health Street, Medical Center"
+    location: "123 Health Street, Medical Center",
+    avatar: "https://randomuser.me/api/portraits/men/32.jpg"
   },
   {
     id: "b2",
     eventId: "3",
     title: "Yoga Class",
     provider: "Zen Yoga Center",
+    publisher: "Mindfulness Group",
     date: "2023-06-16",
     time: "16:00 PM",
     duration: 60,
     status: "confirmed",
     price: 25,
-    location: "789 Zen Street, Wellness Center"
+    location: "789 Zen Street, Wellness Center",
+    avatar: "https://randomuser.me/api/portraits/women/68.jpg"
   },
   {
     id: "b3",
     eventId: "2",
     title: "Haircut & Styling",
     provider: "Style Studio",
+    publisher: "Modern Styles Inc.",
     date: "2023-06-20",
     time: "14:00 PM",
     duration: 45,
     status: "pending",
     price: 50,
-    location: "456 Beauty Avenue, Style District"
+    location: "456 Beauty Avenue, Style District",
+    avatar: "https://randomuser.me/api/portraits/women/44.jpg"
   }
 ];
 
@@ -51,24 +58,28 @@ const MOCK_PAST_BOOKINGS = [
     eventId: "1",
     title: "Dental Checkup",
     provider: "Dr. Smith",
+    publisher: "Metro Health Clinic",
     date: "2023-05-10",
     time: "11:00 AM",
     duration: 30,
     status: "completed",
     price: 75,
-    location: "123 Health Street, Medical Center"
+    location: "123 Health Street, Medical Center",
+    avatar: "https://randomuser.me/api/portraits/men/32.jpg"
   },
   {
     id: "pb2",
     eventId: "5",
     title: "House Cleaning",
     provider: "CleanHome Services",
+    publisher: "Urban Cleaning Solutions",
     date: "2023-05-15",
     time: "09:00 AM",
     duration: 120,
     status: "completed",
     price: 100,
-    location: "Your Home Address"
+    location: "Your Home Address",
+    avatar: "https://randomuser.me/api/portraits/women/23.jpg"
   }
 ];
 
@@ -199,10 +210,26 @@ export default function BookingsPage() {
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{booking.title}</h3>
-                  <p className="text-gray-600 text-sm">Provider: {booking.provider}</p>
                 </div>
                 <div>
                   {getStatusBadge(booking.status)}
+                </div>
+              </div>
+
+              {/* Provider with avatar */}
+              <div className="flex items-center mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div className="relative h-14 w-14 rounded-full overflow-hidden mr-3 ring-2 ring-gray-200">
+                  <Image 
+                    src={booking.avatar} 
+                    alt={booking.provider}
+                    width={56}
+                    height={56}
+                    className="object-cover"
+                  />
+                </div>
+                <div>
+                  <div className="text-base font-medium text-gray-900">{booking.provider}</div>
+                  <div className="text-sm text-gray-500">{booking.publisher}</div>
                 </div>
               </div>
               
@@ -248,14 +275,6 @@ export default function BookingsPage() {
                     Cancel Booking
                   </button>
                 )}
-                
-                {!showCancelButton && booking.status === 'completed' && (
-                  <button
-                    className="w-full sm:w-auto px-4 py-2 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                  >
-                    Book Again
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -263,52 +282,45 @@ export default function BookingsPage() {
       </div>
     );
   };
-
+  
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">My Bookings</h1>
       
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="border-b border-gray-200">
-          <nav className="flex -mb-px">
-            <button
-              className={`px-6 py-3 border-b-2 font-medium text-sm ${
-                activeTab === 'upcoming' 
-                  ? 'border-blue-500 text-blue-600' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('upcoming')}
-            >
-              Upcoming
-            </button>
-            <button
-              className={`px-6 py-3 border-b-2 font-medium text-sm ${
-                activeTab === 'past' 
-                  ? 'border-blue-500 text-blue-600' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('past')}
-            >
-              Past
-            </button>
-          </nav>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-8">
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('upcoming')}
+            className={`flex-1 py-4 px-6 text-center font-medium text-sm focus:outline-none ${
+              activeTab === 'upcoming' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Upcoming Bookings
+          </button>
+          <button
+            onClick={() => setActiveTab('past')}
+            className={`flex-1 py-4 px-6 text-center font-medium text-sm focus:outline-none ${
+              activeTab === 'past' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Past Bookings
+          </button>
         </div>
         
         <div className="p-6">
-          {activeTab === 'upcoming' ? (
-            renderBookingsList(upcomingBookings, true)
-          ) : (
-            renderBookingsList(pastBookings)
-          )}
+          {activeTab === 'upcoming' 
+            ? renderBookingsList(upcomingBookings, true)
+            : renderBookingsList(pastBookings)
+          }
         </div>
       </div>
       
-      <div className="mt-8 text-center">
-        <Link 
+      <div className="flex justify-center">
+        <Link
           href="/user/events"
-          className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          Book New Appointment
+          Browse Events
         </Link>
       </div>
     </div>

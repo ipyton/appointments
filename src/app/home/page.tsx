@@ -31,7 +31,7 @@ export default function HomePage() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                {user.role === "provider" && (
+                {user.role === "ServiceProvider" && (
                   <Link 
                     href="/provider"
                     className="text-green-600 hover:text-green-500 font-medium"
@@ -39,7 +39,7 @@ export default function HomePage() {
                     Provider Dashboard
                   </Link>
                 )}
-                {user.role === "user" && (
+                {user.role === "User" && (
                   <Link 
                     href="/user"
                     className="text-blue-600 hover:text-blue-500 font-medium"

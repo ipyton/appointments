@@ -5,46 +5,17 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { URL } from "@/apis/URL";
-import Auth from "@/apis/Auth";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Home() {
   const router = useRouter();
+  const { user, isLoading, checkLoginStatus } = useAuth();
 
   useEffect(() => {
-    // Check login status when the page loads
-    const checkLoginStatus = async () => {
-      try {
-        // Get token from localStorage
-        const storedUser = localStorage.getItem("user");
-        
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          
-          // Validate token with backend
-          const response = await Auth.validateToken(user.token);
-          
-          if (response.ok) {
-            // Token is valid, redirect based on user role
-            if (user.role === "provider") {
-              router.push("/provider");
-            } else if (user.role === "user") {
-              router.push("/user");
-            } else {
-              router.push("/home");
-            }
-          } else {
-            // Token is invalid, remove from localStorage
-            localStorage.removeItem("user");
-          }
-        }
-      } catch (error) {
-        console.error("Error validating token:", error);
-        localStorage.removeItem("user");
-      }
-    };
-    
+    // Use the checkLoginStatus function from AuthContext
+    // This will handle token validation and redirects
     checkLoginStatus();
-  }, [router]);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">

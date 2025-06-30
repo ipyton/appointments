@@ -84,7 +84,7 @@ export default function Profile() {
             </div>
 
             {/* Conditional Content Based on Role */}
-            {user.role === "user" ? (
+            {user.role === "User" ? (
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-4">My Appointments</h2>
                 <div className="bg-gray-50 rounded-lg p-4">
