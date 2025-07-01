@@ -14,7 +14,8 @@ import {
   PlusCircleIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  ClockIcon
 } from "@heroicons/react/24/outline";
 import ChatBox from "@/components/ChatBox";
 
@@ -55,6 +56,7 @@ export default function ProviderLayout({
 
   const navigation = [
     { name: 'My Calendar', href: '/provider/calendar', icon: CalendarIcon },
+    { name: 'Templates', href: '/provider/templates', icon: ClockIcon },
     { name: 'Appointment Invitations', href: '/provider/invitations', icon: InboxIcon },
     { name: 'Available Events', href: '/provider/events', icon: DocumentDuplicateIcon },
     { name: 'Create Event', href: '/provider/create-event', icon: PlusCircleIcon },

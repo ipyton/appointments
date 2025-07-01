@@ -11,7 +11,9 @@ import {
   DocumentTextIcon,
   PlusIcon,
   TrashIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  PhotoIcon,
+  ArrowPathIcon
 } from "@heroicons/react/24/outline";
 
 interface TimeSlot {
@@ -24,6 +26,21 @@ interface DateSlot {
   timeSlots: TimeSlot[];
 }
 
+interface TimeTemplate {
+  id: string;
+  name: string;
+  timeSlots: TimeSlot[];
+}
+
+interface RepeatConfig {
+  enabled: boolean;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  interval: number; // every X days/weeks/months
+  endDate: string;
+  endAfter: number; // end after X occurrences
+  endType: 'date' | 'occurrences' | 'never';
+}
+
 export default function CreateEventPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -32,49 +49,164 @@ export default function CreateEventPage() {
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState(60);
   const [price, setPrice] = useState("");
-  const [dateSlots, setDateSlots] = useState<DateSlot[]>([
-    { date: "", timeSlots: [{ startTime: "", endTime: "" }] }
+  const [eventImage, setEventImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  
+  // Enhanced date/time management
+  const [startDate, setStartDate] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [customTimeSlots, setCustomTimeSlots] = useState<TimeSlot[]>([
+    { startTime: "", endTime: "" }
   ]);
+  
+  // Repeat configuration
+  const [repeatConfig, setRepeatConfig] = useState<RepeatConfig>({
+    enabled: false,
+    frequency: 'weekly',
+    interval: 1,
+    endDate: '',
+    endAfter: 10,
+    endType: 'occurrences'
+  });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle adding a new date
-  const addDate = () => {
-    setDateSlots([...dateSlots, { date: "", timeSlots: [{ startTime: "", endTime: "" }] }]);
+  // Predefined time templates
+  const timeTemplates: TimeTemplate[] = [
+    {
+      id: 'morning',
+      name: 'Morning Sessions',
+      timeSlots: [
+        { startTime: '09:00', endTime: '10:00' },
+        { startTime: '10:30', endTime: '11:30' },
+        { startTime: '12:00', endTime: '13:00' }
+      ]
+    },
+    {
+      id: 'afternoon',
+      name: 'Afternoon Sessions',
+      timeSlots: [
+        { startTime: '14:00', endTime: '15:00' },
+        { startTime: '15:30', endTime: '16:30' },
+        { startTime: '17:00', endTime: '18:00' }
+      ]
+    },
+    {
+      id: 'evening',
+      name: 'Evening Sessions',
+      timeSlots: [
+        { startTime: '18:00', endTime: '19:00' },
+        { startTime: '19:30', endTime: '20:30' },
+        { startTime: '21:00', endTime: '22:00' }
+      ]
+    },
+    {
+      id: 'full_day',
+      name: 'Full Day Schedule',
+      timeSlots: [
+        { startTime: '09:00', endTime: '10:00' },
+        { startTime: '10:30', endTime: '11:30' },
+        { startTime: '13:00', endTime: '14:00' },
+        { startTime: '14:30', endTime: '15:30' },
+        { startTime: '16:00', endTime: '17:00' },
+        { startTime: '17:30', endTime: '18:30' }
+      ]
+    }
+  ];
+
+  // Handle image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert("Image size must be less than 5MB");
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        alert("Please select an image file");
+        return;
+      }
+      
+      setEventImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  // Handle removing a date
-  const removeDate = (dateIndex: number) => {
-    const newDateSlots = [...dateSlots];
-    newDateSlots.splice(dateIndex, 1);
-    setDateSlots(newDateSlots);
+  // Handle template selection
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    if (templateId === 'custom') {
+      setCustomTimeSlots([{ startTime: "", endTime: "" }]);
+    } else {
+      const template = timeTemplates.find(t => t.id === templateId);
+      if (template) {
+        setCustomTimeSlots(template.timeSlots);
+      }
+    }
   };
 
-  // Handle adding a time slot to a specific date
-  const addTimeSlot = (dateIndex: number) => {
-    const newDateSlots = [...dateSlots];
-    newDateSlots[dateIndex].timeSlots.push({ startTime: "", endTime: "" });
-    setDateSlots(newDateSlots);
+  // Handle custom time slot changes
+  const addCustomTimeSlot = () => {
+    setCustomTimeSlots([...customTimeSlots, { startTime: "", endTime: "" }]);
   };
 
-  // Handle removing a time slot from a specific date
-  const removeTimeSlot = (dateIndex: number, timeIndex: number) => {
-    const newDateSlots = [...dateSlots];
-    newDateSlots[dateIndex].timeSlots.splice(timeIndex, 1);
-    setDateSlots(newDateSlots);
+  const removeCustomTimeSlot = (index: number) => {
+    const newSlots = [...customTimeSlots];
+    newSlots.splice(index, 1);
+    setCustomTimeSlots(newSlots);
   };
 
-  // Handle date change
-  const handleDateChange = (dateIndex: number, value: string) => {
-    const newDateSlots = [...dateSlots];
-    newDateSlots[dateIndex].date = value;
-    setDateSlots(newDateSlots);
+  const handleCustomTimeSlotChange = (index: number, field: 'startTime' | 'endTime', value: string) => {
+    const newSlots = [...customTimeSlots];
+    newSlots[index][field] = value;
+    setCustomTimeSlots(newSlots);
   };
 
-  // Handle time slot change
-  const handleTimeSlotChange = (dateIndex: number, timeIndex: number, field: 'startTime' | 'endTime', value: string) => {
-    const newDateSlots = [...dateSlots];
-    newDateSlots[dateIndex].timeSlots[timeIndex][field] = value;
-    setDateSlots(newDateSlots);
+  // Generate dates based on repeat configuration
+  const generateRepeatedDates = (startDate: string, repeatConfig: RepeatConfig): string[] => {
+    if (!repeatConfig.enabled) return [startDate];
+    
+    const dates: string[] = [];
+    const start = new Date(startDate);
+    let current = new Date(start);
+    
+    // Determine end condition
+    let maxOccurrences = 100; // Safety limit
+    if (repeatConfig.endType === 'occurrences') {
+      maxOccurrences = repeatConfig.endAfter;
+    } else if (repeatConfig.endType === 'date' && repeatConfig.endDate) {
+      const endDate = new Date(repeatConfig.endDate);
+      maxOccurrences = Math.ceil((endDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7)) + 10; // Rough estimate
+    }
+    
+    for (let i = 0; i < maxOccurrences; i++) {
+      dates.push(current.toISOString().split('T')[0]);
+      
+      // Check end date condition
+      if (repeatConfig.endType === 'date' && repeatConfig.endDate) {
+        if (current >= new Date(repeatConfig.endDate)) break;
+      }
+      
+      // Increment based on frequency
+      switch (repeatConfig.frequency) {
+        case 'daily':
+          current.setDate(current.getDate() + repeatConfig.interval);
+          break;
+        case 'weekly':
+          current.setDate(current.getDate() + (7 * repeatConfig.interval));
+          break;
+        case 'monthly':
+          current.setMonth(current.getMonth() + repeatConfig.interval);
+          break;
+      }
+    }
+    
+    return dates;
   };
 
   // Handle form submission
@@ -83,40 +215,56 @@ export default function CreateEventPage() {
     setIsSubmitting(true);
     
     // Validate form
-    if (!title || !description || !duration || !price) {
+    if (!title || !description || !duration || !price || !startDate) {
       alert("Please fill in all required fields");
       setIsSubmitting(false);
       return;
     }
 
-    // Check if all dates and time slots are filled
-    const isValid = dateSlots.every(dateSlot => 
-      dateSlot.date && dateSlot.timeSlots.every(timeSlot => 
-        timeSlot.startTime && timeSlot.endTime
-      )
+    // Check if time slots are filled
+    const hasValidTimeSlots = customTimeSlots.every(slot => 
+      slot.startTime && slot.endTime
     );
 
-    if (!isValid) {
-      alert("Please fill in all dates and time slots");
+    if (!hasValidTimeSlots) {
+      alert("Please fill in all time slots");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      // In a real app, this would send data to your backend
-      console.log({
+      // Generate all event dates
+      const eventDates = generateRepeatedDates(startDate, repeatConfig);
+      
+      // Create date slots for each generated date
+      const generatedDateSlots = eventDates.map(date => ({
+        date,
+        timeSlots: [...customTimeSlots]
+      }));
+
+      const eventData = {
         title,
         description,
         duration,
         price: parseFloat(price),
-        dateSlots,
+        dateSlots: generatedDateSlots,
         providerId: user?.id,
         isActive: true,
-        createdAt: new Date().toISOString()
-      });
+        createdAt: new Date().toISOString(),
+        image: eventImage,
+        repeatConfig: repeatConfig.enabled ? repeatConfig : null,
+        template: selectedTemplate !== 'custom' ? selectedTemplate : null
+      };
+      
+      console.log("Event Data:", eventData);
+      
+      // In a real app, you would upload the image and send data to your backend
+      // const formData = new FormData();
+      // formData.append('eventData', JSON.stringify(eventData));
+      // if (eventImage) formData.append('image', eventImage);
       
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 1200));
       
       // Redirect to events page
       router.push("/provider/events");
@@ -143,7 +291,7 @@ export default function CreateEventPage() {
       opacity: 1,
       y: 0,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100
       }
     }
@@ -151,14 +299,15 @@ export default function CreateEventPage() {
 
   return (
     <motion.div 
-      className="max-w-3xl mx-auto"
+      className="max-w-4xl mx-auto px-4 py-6"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
-      <motion.h1 variants={itemVariants} className="text-2xl font-bold mb-6 text-gray-900">Create New Event</motion.h1>
+      <motion.h1 variants={itemVariants} className="text-3xl font-bold mb-8 text-gray-900 border-b pb-4">Create New Event</motion.h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Event Details Section */}
         <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-6 space-y-5">
           <div className="flex items-center mb-2">
             <DocumentTextIcon className="h-5 w-5 text-blue-600 mr-2" />
@@ -243,109 +392,186 @@ export default function CreateEventPage() {
           </div>
         </motion.div>
 
+        {/* Image Upload Section */}
         <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center">
-              <CalendarIcon className="h-5 w-5 text-blue-600 mr-2" />
-              <h2 className="text-lg font-medium text-gray-900">Available Dates and Times</h2>
-            </div>
-            <button
-              type="button"
-              onClick={addDate}
-              className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-            >
-              <PlusIcon className="h-4 w-4 mr-1" />
-              Add Date
-            </button>
+          <div className="flex items-center mb-4">
+            <PhotoIcon className="h-5 w-5 text-blue-600 mr-2" />
+            <h2 className="text-lg font-medium text-gray-900">Event Image</h2>
           </div>
           
-          {dateSlots.map((dateSlot, dateIndex) => (
-            <motion.div 
-              key={dateIndex} 
-              className="mb-6 pb-6 border-b border-gray-200 last:border-b-0 last:pb-0 last:mb-0"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+          <div className="space-y-4">
+            <div className="flex items-center justify-center w-full">
+              <label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                {imagePreview ? (
+                  <div className="relative w-full h-full">
+                    <img
+                      src={imagePreview}
+                      alt="Event preview"
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-lg">
+                      <span className="text-white text-sm font-medium">Click to change image</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <PhotoIcon className="w-10 h-10 mb-3 text-gray-400" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 5MB)</p>
+                  </div>
+                )}
+                <input
+                  id="image-upload"
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+              </label>
+            </div>
+            
+            {eventImage && (
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center">
+                  <CheckCircleIcon className="h-5 w-5 text-green-600 mr-2" />
+                  <span className="text-sm text-green-800">{eventImage.name}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEventImage(null);
+                    setImagePreview("");
+                  }}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Schedule Setup Section */}
+        <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center mb-5">
+            <CalendarIcon className="h-5 w-5 text-blue-600 mr-2" />
+            <h2 className="text-lg font-medium text-gray-900">Schedule Setup</h2>
+          </div>
+          
+          {/* Start Date */}
+          <div className="mb-5">
+            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Start Date *
+            </label>
+            <input
+              type="date"
+              id="startDate"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
+              required
+            />
+          </div>
+
+          {/* Time Template Selection */}
+          <div className="mb-5">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Time Template *
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {timeTemplates.map((template) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => handleTemplateChange(template.id)}
+                  className={`p-4 text-left border rounded-lg transition-colors shadow-sm hover:shadow-md ${
+                    selectedTemplate === template.id
+                      ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-200'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="font-medium text-sm">{template.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {template.timeSlots.length} time slots
+                  </div>
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => handleTemplateChange('custom')}
+                className={`p-4 text-left border rounded-lg transition-colors shadow-sm hover:shadow-md ${
+                  selectedTemplate === 'custom'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-200'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="font-medium text-sm">Custom</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Create your own schedule
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Custom Time Slots */}
+                          {selectedTemplate && (
+            <div className="mb-5">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="font-medium text-gray-900 flex items-center">
-                  <CalendarIcon className="h-4 w-4 text-gray-600 mr-1" />
-                  Date {dateIndex + 1}
-                </h3>
-                {dateSlots.length > 1 && (
+                <h4 className="text-sm font-medium text-gray-700 flex items-center">
+                  <ClockIcon className="h-4 w-4 text-gray-600 mr-1" />
+                  Time Slots
+                </h4>
+                {selectedTemplate === 'custom' && (
                   <button
                     type="button"
-                    onClick={() => removeDate(dateIndex)}
-                    className="inline-flex items-center text-red-600 hover:text-red-800 text-sm font-medium"
+                    onClick={addCustomTimeSlot}
+                    className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-xs font-medium shadow-sm"
                   >
-                    <TrashIcon className="h-4 w-4 mr-1" />
-                    Remove
+                    <PlusIcon className="h-3.5 w-3.5 mr-1" />
+                    Add Time Slot
                   </button>
                 )}
               </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Date *
-                </label>
-                <input
-                  type="date"
-                  value={dateSlot.date}
-                  onChange={(e) => handleDateChange(dateIndex, e.target.value)}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
-                  required
-                />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-medium text-gray-700 flex items-center">
-                    <ClockIcon className="h-4 w-4 text-gray-600 mr-1" />
-                    Time Slots
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => addTimeSlot(dateIndex)}
-                    className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-xs font-medium"
-                  >
-                    <PlusIcon className="h-3 w-3 mr-1" />
-                    Add Time Slot
-                  </button>
-                </div>
-                
-                {dateSlot.timeSlots.map((timeSlot, timeIndex) => (
-                  <div key={timeIndex} className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+              
+              <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                {customTimeSlots.map((timeSlot, index) => (
+                  <div key={index} className="flex items-center space-x-3 bg-white p-3 rounded-lg shadow-sm">
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
                         Start Time *
                       </label>
                       <input
                         type="time"
                         value={timeSlot.startTime}
-                        onChange={(e) => handleTimeSlotChange(dateIndex, timeIndex, 'startTime', e.target.value)}
+                        onChange={(e) => handleCustomTimeSlotChange(index, 'startTime', e.target.value)}
                         className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                         required
+                        disabled={selectedTemplate !== 'custom'}
                       />
                     </div>
                     
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
                         End Time *
                       </label>
                       <input
                         type="time"
                         value={timeSlot.endTime}
-                        onChange={(e) => handleTimeSlotChange(dateIndex, timeIndex, 'endTime', e.target.value)}
+                        onChange={(e) => handleCustomTimeSlotChange(index, 'endTime', e.target.value)}
                         className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                         required
+                        disabled={selectedTemplate !== 'custom'}
                       />
                     </div>
                     
-                    {dateSlot.timeSlots.length > 1 && (
+                    {selectedTemplate === 'custom' && customTimeSlots.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => removeTimeSlot(dateIndex, timeIndex)}
-                        className="mt-6 text-red-600 hover:text-red-800"
+                        onClick={() => removeCustomTimeSlot(index)}
+                        className="mt-6 text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded-full transition-colors"
                       >
                         <TrashIcon className="h-5 w-5" />
                       </button>
@@ -353,33 +579,162 @@ export default function CreateEventPage() {
                   </div>
                 ))}
               </div>
-            </motion.div>
-          ))}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Repeat Settings Section */}
+        <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center mb-5">
+            <ArrowPathIcon className="h-5 w-5 text-blue-600 mr-2" />
+            <h2 className="text-lg font-medium text-gray-900">Repeat Settings</h2>
+          </div>
           
-          <div className="mt-6 flex justify-center">
-            <button
-              type="button"
-              onClick={addDate}
-              className="inline-flex items-center px-4 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:bg-gray-50 transition-colors text-sm font-medium"
-            >
-              <PlusIcon className="h-5 w-5 mr-1" />
-              Add Another Date
-            </button>
+          <div className="space-y-4">
+            <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+              <input
+                type="checkbox"
+                id="enableRepeat"
+                checked={repeatConfig.enabled}
+                onChange={(e) => setRepeatConfig({...repeatConfig, enabled: e.target.checked})}
+                className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="enableRepeat" className="ml-2 text-sm font-medium text-gray-800">
+                Repeat this event
+              </label>
+            </div>
+            
+            {repeatConfig.enabled && (
+              <div className="space-y-4 pl-6 border-l-2 border-blue-200 bg-blue-50 p-4 rounded-lg">
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    Repeat Frequency
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setRepeatConfig({...repeatConfig, frequency: 'daily'})}
+                      className={`px-3 py-2 text-center border rounded-md transition-colors ${
+                        repeatConfig.frequency === 'daily'
+                          ? 'border-blue-500 bg-blue-100 text-blue-700'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <span className="text-sm font-medium">Daily</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRepeatConfig({...repeatConfig, frequency: 'weekly'})}
+                      className={`px-3 py-2 text-center border rounded-md transition-colors ${
+                        repeatConfig.frequency === 'weekly'
+                          ? 'border-blue-500 bg-blue-100 text-blue-700'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <span className="text-sm font-medium">Weekly</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRepeatConfig({...repeatConfig, frequency: 'monthly'})}
+                      className={`px-3 py-2 text-center border rounded-md transition-colors ${
+                        repeatConfig.frequency === 'monthly'
+                          ? 'border-blue-500 bg-blue-100 text-blue-700'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <span className="text-sm font-medium">Monthly</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    End repeat
+                  </label>
+                  <div className="space-y-3 bg-white p-3 rounded-lg shadow-sm">
+                    <div className="flex items-center p-2 hover:bg-gray-50 rounded-md transition-colors">
+                      <input
+                        type="radio"
+                        id="endNever"
+                        name="endType"
+                        value="never"
+                        checked={repeatConfig.endType === 'never'}
+                        onChange={(e) => setRepeatConfig({...repeatConfig, endType: 'never'})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <label htmlFor="endNever" className="ml-2 text-sm text-gray-700 font-medium">
+                        Never
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-md transition-colors">
+                      <input
+                        type="radio"
+                        id="endAfter"
+                        name="endType"
+                        value="occurrences"
+                        checked={repeatConfig.endType === 'occurrences'}
+                        onChange={(e) => setRepeatConfig({...repeatConfig, endType: 'occurrences'})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <label htmlFor="endAfter" className="text-sm text-gray-700 font-medium">
+                        After
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={repeatConfig.endAfter}
+                        onChange={(e) => setRepeatConfig({...repeatConfig, endAfter: parseInt(e.target.value)})}
+                        disabled={repeatConfig.endType !== 'occurrences'}
+                        className="w-20 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors disabled:bg-gray-100"
+                      />
+                      <span className="text-sm text-gray-700">occurrences</span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-md transition-colors">
+                      <input
+                        type="radio"
+                        id="endOn"
+                        name="endType"
+                        value="date"
+                        checked={repeatConfig.endType === 'date'}
+                        onChange={(e) => setRepeatConfig({...repeatConfig, endType: 'date'})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <label htmlFor="endOn" className="text-sm text-gray-700 font-medium">
+                        On
+                      </label>
+                      <input
+                        type="date"
+                        value={repeatConfig.endDate}
+                        onChange={(e) => setRepeatConfig({...repeatConfig, endDate: e.target.value})}
+                        disabled={repeatConfig.endType !== 'date'}
+                        min={startDate}
+                        className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="flex justify-end space-x-3">
+        {/* Submit Buttons */}
+        <motion.div variants={itemVariants} className="flex justify-end space-x-4 pt-4 mt-6 border-t">
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-5 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+            className="px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center ${
+            className={`px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center shadow-sm ${
               isSubmitting ? "opacity-75 cursor-not-allowed" : ""
             }`}
           >
@@ -393,7 +748,7 @@ export default function CreateEventPage() {
               </>
             ) : (
               <>
-                <CheckCircleIcon className="h-4 w-4 mr-1" />
+                <CheckCircleIcon className="h-4 w-4 mr-1.5" />
                 Create Event
               </>
             )}
@@ -402,4 +757,4 @@ export default function CreateEventPage() {
       </form>
     </motion.div>
   );
-} 
+}

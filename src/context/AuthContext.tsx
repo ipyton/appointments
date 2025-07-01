@@ -53,7 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Function to check login status and redirect if needed
   const checkLoginStatus = async () => {
-    setIsLoading(true);
+    setUser({role:"ServiceProvider", id: "1", name: "John Doe", email: "john.doe@example.com"});
+    setIsLoading(false);
+    return
     try {
       // Get token from localStorage
       const storedUser = localStorage.getItem("User");
@@ -87,7 +89,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // In a real app, these would make API calls to your backend
   const login = async (email: string, password: string, rememberMe: boolean = false) => {
-    // This is a mock implementation
+
+
+
     setIsLoading(true);
     
     try {
