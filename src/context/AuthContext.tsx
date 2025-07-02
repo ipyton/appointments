@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Function to check login status and redirect if needed
   const checkLoginStatus = async () => {
-    setUser({role:"User", id: "1", name: "John Doe", email: "john.doe@example.com", avatar: null});
+    setUser({role:"ServiceProvider", id: "1", name: "John Doe", email: "john.doe@example.com", avatar: null});
     setIsLoading(false);
     return
     try {

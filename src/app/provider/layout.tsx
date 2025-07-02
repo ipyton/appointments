@@ -15,7 +15,8 @@ import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   ChatBubbleLeftRightIcon,
-  ClockIcon
+  ClockIcon,
+  CurrencyDollarIcon
 } from "@heroicons/react/24/outline";
 import ChatBox from "@/components/ChatBox";
 
@@ -61,6 +62,7 @@ export default function ProviderLayout({
     { name: 'Available Events', href: '/provider/events', icon: DocumentDuplicateIcon },
     { name: 'Create Event', href: '/provider/create-event', icon: PlusCircleIcon },
     { name: 'Customer Chat', href: '/provider/chat', icon: ChatBubbleLeftRightIcon },
+    { name: 'Finance', href: '/provider/finance', icon: CurrencyDollarIcon },
   ];
 
   return (
