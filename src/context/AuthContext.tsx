@@ -14,6 +14,7 @@ interface AuthUser {
   role: UserRole;
   token?: string;
   isServiceProvider?: boolean;
+  avatar?: string | null;
 }
 
 interface AuthContextType {
@@ -24,6 +25,7 @@ interface AuthContextType {
   logout: () => void;
   resetPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
   checkLoginStatus: () => Promise<void>;
+  updateProfile: (data: Partial<AuthUser>, avatarFile?: File | null) => Promise<{ success: boolean; message?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Function to check login status and redirect if needed
   const checkLoginStatus = async () => {
-    setUser({role:"ServiceProvider", id: "1", name: "John Doe", email: "john.doe@example.com"});
+    setUser({role:"User", id: "1", name: "John Doe", email: "john.doe@example.com", avatar: null});
     setIsLoading(false);
     return
     try {
@@ -171,6 +173,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (data: Partial<AuthUser>, avatarFile?: File | null) => {
+    if (!user) {
+      return {
+        success: false,
+        message: "You must be logged in to update your profile."
+      };
+    }
+
+    setIsLoading(true);
+    
+    try {
+      // In a real app, we would make an API call to update the profile
+      // For now, we'll simulate a successful update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // For a real app, you would use FormData to handle file uploads
+      // const formData = new FormData();
+      // Object.entries(data).forEach(([key, value]) => {
+      //   if (value !== undefined) {
+      //     formData.append(key, value as string);
+      //   }
+      // });
+      
+      // if (avatarFile) {
+      //   formData.append('avatar', avatarFile);
+      // }
+      
+      // const response = await fetch(URL + "/account/update-profile", {
+      //   method: "PUT",
+      //   headers: {
+      //     Authorization: `Bearer ${user.token}`,
+      //   },
+      //   body: formData,
+      // });
+      
+      // const responseData = await response.json();
+      
+      // if (!response.ok) {
+      //   throw new Error(responseData.message || "Failed to update profile");
+      // }
+      
+      // Update the user state with the new data
+      const updatedUser = {
+        ...user,
+        ...data,
+        // In a real app, the avatar URL would come from the server response
+        avatar: avatarFile ? window.URL.createObjectURL(avatarFile) : user.avatar,
+      };
+      
+      setUser(updatedUser);
+      localStorage.setItem("User", JSON.stringify(updatedUser));
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Profile update failed:", error);
+      return { 
+        success: false, 
+        message: "Failed to update profile. Please try again." 
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const resetPassword = async (email: string) => {
     setIsLoading(true);
     
@@ -227,7 +293,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, resetPassword, checkLoginStatus }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, resetPassword, checkLoginStatus, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
