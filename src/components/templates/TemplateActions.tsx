@@ -1,10 +1,30 @@
 import { ArrowDownTrayIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { motion, Variants } from "framer-motion";
 import { useRef } from "react";
-import { Template } from "@/types/templates";
+
+// Define LocalTemplate interface to match what's used in page.tsx
+interface TimeRange {
+  id: string;
+  startTime: string;
+  endTime: string;
+  selected: boolean;
+}
+
+interface DaySchedule {
+  id: string;
+  dayName: string;
+  dayIndex: number;
+  timeRanges: TimeRange[];
+}
+
+interface LocalTemplate {
+  name: string;
+  description?: string;
+  daySchedules: DaySchedule[];
+}
 
 interface TemplateActionsProps {
-  onImport: (templates: Template[]) => void;
+  onImport: (templates: LocalTemplate[]) => void;
   onExport: () => void;
   hasTemplates: boolean;
   variants: Variants; // Animation variants
@@ -36,7 +56,7 @@ export default function TemplateActions({
         if (Array.isArray(importedTemplates) && importedTemplates.every(t => 
           typeof t === 'object' && 
           typeof t.name === 'string' && 
-          Array.isArray(t.timeRanges)
+          Array.isArray(t.daySchedules)
         )) {
           if (confirm(`Import ${importedTemplates.length} templates? This will replace your current templates.`)) {
             onImport(importedTemplates);

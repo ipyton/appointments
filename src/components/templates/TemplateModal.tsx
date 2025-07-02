@@ -11,8 +11,9 @@ import {
   X,
   Save
 } from "lucide-react";
+import Templates from "../../apis/Templates";
 
-// Updated types to match backend models
+// Updated types to match the LocalTemplate interface used in page.tsx
 interface TimeRange {
   id: string;
   startTime: string;
@@ -22,6 +23,7 @@ interface TimeRange {
 
 interface DaySchedule {
   id: string;
+  dayName: string;
   dayIndex: number;
   timeRanges: TimeRange[];
 }
@@ -132,12 +134,13 @@ export default function TemplateModal({
   const addDay = () => {
     const newDay: DaySchedule = {
       id: `day_${Date.now()}_${Math.random()}`,
+      dayName: DAYS_OF_WEEK[template.daySchedules.length % 7],
       dayIndex: template.daySchedules.length,
       timeRanges: []
     };
-    
+
     setTemplate(prevTemplate => ({
-      ...prevTemplate,
+      ...prevTemplate, 
       daySchedules: [...prevTemplate.daySchedules, newDay]
     }));
   };
@@ -154,6 +157,7 @@ export default function TemplateModal({
     
     const copiedDay: DaySchedule = {
       id: `day_${Date.now()}_${Math.random()}`,
+      dayName: dayToCopy.dayName,
       dayIndex: template.daySchedules.length,
       timeRanges: copiedTimeRanges
     };

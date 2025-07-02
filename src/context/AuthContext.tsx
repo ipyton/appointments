@@ -9,7 +9,8 @@ type UserRole = "User" | "ServiceProvider" | null;
 
 interface AuthUser {
   id: string;
-  name: string;
+  fullName: string;
+  businessName?: string;
   email: string;
   role: UserRole;
   token?: string;
@@ -55,9 +56,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Function to check login status and redirect if needed
   const checkLoginStatus = async () => {
-    setUser({role:"ServiceProvider", id: "1", name: "John Doe", email: "john.doe@example.com", avatar: null});
-    setIsLoading(false);
-    return
+    // setUser({role:"ServiceProvider", id: "1", name: "John Doe", email: "john.doe@example.com", avatar: null});
+    setIsLoading(true);
+    // return
     try {
       // Get token from localStorage
       const storedUser = localStorage.getItem("User");
@@ -119,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setUser(data);  
       localStorage.setItem("User", JSON.stringify(data));
-      
+      localStorage.setItem("token", data.token);
       // Navigation is now handled in the separate useEffect
       return { success: true };
     } catch (error) {
@@ -156,9 +157,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           message: data.message || "Registration failed. Please try again." 
         };
       }
+
       
-      setUser(data);
-      localStorage.setItem("User", JSON.stringify(data));
+      
+      // setUser(data);
+      // localStorage.setItem("User", JSON.stringify(data));
       
       // Navigation is now handled in the separate useEffect
       return { success: true };

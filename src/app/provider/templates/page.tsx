@@ -9,12 +9,30 @@ import TemplateCard from "@/components/templates/TemplateCard";
 import TemplateModal from "@/components/templates/TemplateModal";
 import EmptyState from "@/components/templates/EmptyState";
 import TemplateActions from "@/components/templates/TemplateActions";
+import Templates from "@/apis/Templates";
+
+// Define a local Template interface that matches what's used in the components
+interface LocalTemplate {
+  name: string;
+  description?: string;
+  daySchedules: {
+    id: string;
+    dayName: string;
+    dayIndex: number;
+    timeRanges: {
+      id: string;
+      startTime: string;
+      endTime: string;
+      selected: boolean;
+    }[];
+  }[];
+}
 
 export default function TemplatesPage() {
   const { user } = useAuth();
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<LocalTemplate[]>([]);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [currentTemplate, setCurrentTemplate] = useState<Template | undefined>(undefined);
+  const [currentTemplate, setCurrentTemplate] = useState<LocalTemplate | undefined>(undefined);
 
   // Load templates from localStorage
   useEffect(() => {
@@ -35,7 +53,7 @@ export default function TemplatesPage() {
     }
   }, [templates]);
 
-  const openTemplateModal = (template?: Template) => {
+  const openTemplateModal = (template?: LocalTemplate) => {
     setCurrentTemplate(template);
     setShowTemplateModal(true);
   };
@@ -45,23 +63,34 @@ export default function TemplatesPage() {
     setCurrentTemplate(undefined);
   };
 
-  const handleSaveTemplate = (template: Template) => {
+  const handleSaveTemplate = (template: LocalTemplate) => {
     // Check if template name already exists
-    const exists = templates.some(t => t.name === template.name);
-    if (exists) {
-      // Update existing template
-      console.log("updating template");
-      console.log(template);
 
-      setTemplates(templates.map(t => 
-        t.name === template.name ? template : t
-      ));
-    } else {
-      // Add new template
-      setTemplates([...templates, template]);
-    }
+    Templates.upsertTemplate(template).then(response => {
+      if (response.ok) {
+        console.log(response);
+        const exists = templates.some(t => t.name === template.name);
+        if (exists) {
+          // Update existing template
+          console.log("updating template");
+          console.log(template);
     
-    closeTemplateModal();
+          setTemplates(templates.map(t => 
+            t.name === template.name ? template : t
+          ));
+        } else {
+          // Add new template
+          setTemplates([...templates, template]);
+        }
+        
+        closeTemplateModal();
+
+      } else {
+        console.log("Failed to save template");
+      }
+    });
+
+  
   };
 
   const handleDeleteTemplate = (templateName: string) => {
@@ -70,7 +99,7 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleImportTemplates = (importedTemplates: Template[]) => {
+  const handleImportTemplates = (importedTemplates: LocalTemplate[]) => {
     setTemplates(importedTemplates);
   };
 
@@ -140,7 +169,7 @@ export default function TemplatesPage() {
           variants={itemVariants}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-2">
           {templates.map((template) => (
             <TemplateCard
               key={template.name}

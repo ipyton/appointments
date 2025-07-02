@@ -39,7 +39,6 @@ export default function ProviderLayout({
     
     // Redirect if not logged in or not a provider
     if (!user) {
-      console.log("no user");
       router.push("/login");
     } else if (user.role !== "ServiceProvider") {
       router.push("/home");
@@ -87,7 +86,7 @@ export default function ProviderLayout({
                   </div>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                  <span className="text-gray-600 mr-4">Welcome, {user.name}</span>
+                  <span className="text-gray-600 mr-4">Welcome, {user.fullName}</span>
                   
                   {/* Profile dropdown */}
                   <Menu as="div" className="relative ml-3">
@@ -95,7 +94,7 @@ export default function ProviderLayout({
                       <Menu.Button className="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                         <span className="sr-only">Open user menu</span>
                         <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                          {user.name.charAt(0).toUpperCase()}
+                          {user.fullName.charAt(0).toUpperCase()}
                         </div>
                       </Menu.Button>
                     </div>
@@ -177,7 +176,7 @@ export default function ProviderLayout({
                 <div className="flex items-center px-4">
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                      {user.name.charAt(0).toUpperCase()}
+                      {user.fullName.charAt(0).toUpperCase()}
                     </div>
                   </div>
                   <div className="ml-3">

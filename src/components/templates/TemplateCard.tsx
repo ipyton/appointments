@@ -1,13 +1,14 @@
 import {
   ClockIcon,
-  DocumentDuplicateIcon,
+  PencilIcon,
   TrashIcon,
-  CalendarIcon
+  CalendarIcon,
+  DocumentDuplicateIcon
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";
 
-// Updated interfaces to match the previous code structure
+// Updated interfaces to match the LocalTemplate interface used in page.tsx
 interface TimeRange {
   id: string;
   startTime: string;
@@ -18,6 +19,7 @@ interface TimeRange {
 interface DaySchedule {
   id: string;
   dayName: string;
+  dayIndex: number;
   timeRanges: TimeRange[];
 }
 
@@ -56,11 +58,33 @@ export default function TemplateCard({
 
   // Get day names for display
   const dayNames = template.daySchedules.map(day => day.dayName).join(', ');
+  
+  // Handle copy template
+  const handleCopyTemplate = () => {
+    // Create a deep copy of the template
+    const copiedTemplate: Template = JSON.parse(JSON.stringify(template));
+    
+    // Modify the name to indicate it's a copy
+    copiedTemplate.name = `${template.name} (Copy)`;
+    
+    // Generate new IDs for all days and time ranges to ensure uniqueness
+    copiedTemplate.daySchedules = copiedTemplate.daySchedules.map(day => ({
+      ...day,
+      id: `day_${Date.now()}_${Math.random()}`,
+      timeRanges: day.timeRanges.map(range => ({
+        ...range,
+        id: `time_${Date.now()}_${Math.random()}`
+      }))
+    }));
+    
+    // Pass the copied template to onEdit which will open the modal with the copied template
+    onEdit(copiedTemplate);
+  };
 
   return (
     <motion.div 
       variants={variants}
-      className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow"
+      className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow w-full max-w-md"
     >
       {/* Header */}
       <div className="p-5 border-b border-gray-100">
@@ -91,13 +115,25 @@ export default function TemplateCard({
           </div>
           
           <div className="flex space-x-2 ml-4">
+            {/* Edit button */}
             <button
               onClick={() => onEdit(template)}
               className="p-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
               aria-label="Edit template"
             >
+              <PencilIcon className="h-4 w-4" />
+            </button>
+            
+            {/* Copy button */}
+            <button
+              onClick={handleCopyTemplate}
+              className="p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+              aria-label="Copy template"
+            >
               <DocumentDuplicateIcon className="h-4 w-4" />
             </button>
+            
+            {/* Delete button */}
             <button
               onClick={() => onDelete(template.name)}
               className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
@@ -117,11 +153,11 @@ export default function TemplateCard({
           </div>
         ) : (
           <div className="space-y-4">
-            {template.daySchedules.map((day) => (
+            {template.daySchedules.map((day, index) => (
               <div key={day.id} className="bg-white rounded-lg p-3 border border-gray-100">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-medium text-gray-800">
-                    {day.dayName}
+                    <span className="inline-block min-w-16">Day {index + 1}:</span> {day.dayName}
                   </h4>
                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                     {day.timeRanges.length} slot{day.timeRanges.length !== 1 ? 's' : ''}
@@ -162,16 +198,6 @@ export default function TemplateCard({
         )}
       </div>
 
-      {/* Footer */}
-      <div className="p-4 bg-white border-t border-gray-100">
-        <Link 
-          href="/provider/calendar"
-          className="w-full flex items-center justify-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-        >
-          <CalendarIcon className="h-4 w-4 mr-2" />
-          Apply to Calendar
-        </Link>
-      </div>
     </motion.div>
   );
 }
