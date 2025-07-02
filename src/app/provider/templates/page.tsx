@@ -50,6 +50,9 @@ export default function TemplatesPage() {
     const exists = templates.some(t => t.name === template.name);
     if (exists) {
       // Update existing template
+      console.log("updating template");
+      console.log(template);
+
       setTemplates(templates.map(t => 
         t.name === template.name ? template : t
       ));

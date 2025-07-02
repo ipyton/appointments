@@ -23,6 +23,7 @@ interface DaySchedule {
 
 interface Template {
   name: string;
+  description?: string;
   daySchedules: DaySchedule[];
 }
 
@@ -68,6 +69,11 @@ export default function TemplateCard({
             <h2 className="text-lg font-semibold text-gray-900 truncate">
               {template.name}
             </h2>
+            {template.description && (
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                {template.description}
+              </p>
+            )}
             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
               <span>
                 {template.daySchedules.length} day{template.daySchedules.length !== 1 ? 's' : ''}

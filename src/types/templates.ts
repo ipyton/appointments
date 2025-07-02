@@ -9,6 +9,7 @@ export interface TimeRange {
 // Interface for template
 export interface Template {
   name: string;
+  description?: string;
   timeRanges: TimeRange[];
 }
 

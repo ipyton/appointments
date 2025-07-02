@@ -12,7 +12,7 @@ import {
   Save
 } from "lucide-react";
 
-// Updated types to support multiple days
+// Updated types to match backend models
 interface TimeRange {
   id: string;
   startTime: string;
@@ -22,12 +22,13 @@ interface TimeRange {
 
 interface DaySchedule {
   id: string;
-  dayName: string;
+  dayIndex: number;
   timeRanges: TimeRange[];
 }
 
 interface Template {
   name: string;
+  description?: string;
   daySchedules: DaySchedule[];
 }
 
@@ -50,6 +51,7 @@ export default function TemplateModal({
 }: TemplateModalProps) {
   const [template, setTemplate] = useState<Template>({ 
     name: "", 
+    description: "",
     daySchedules: [] 
   });
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
@@ -71,7 +73,7 @@ export default function TemplateModal({
       if (initialTemplate) {
         setTemplate(JSON.parse(JSON.stringify(initialTemplate))); // Deep copy
       } else {
-        setTemplate({ name: "", daySchedules: [] });
+        setTemplate({ name: "", description: "", daySchedules: [] });
       }
       setValidationErrors({});
     }
@@ -128,13 +130,9 @@ export default function TemplateModal({
 
   // Day management functions
   const addDay = () => {
-    // Find next available day name
-    const usedDayNames = template.daySchedules.map(day => day.dayName);
-    const availableDay = DAYS_OF_WEEK.find(day => !usedDayNames.includes(day)) || "Monday";
-    
     const newDay: DaySchedule = {
       id: `day_${Date.now()}_${Math.random()}`,
-      dayName: availableDay,
+      dayIndex: template.daySchedules.length,
       timeRanges: []
     };
     
@@ -148,10 +146,6 @@ export default function TemplateModal({
     const dayToCopy = template.daySchedules.find(day => day.id === dayId);
     if (!dayToCopy) return;
     
-    // Find next available day name
-    const usedDayNames = template.daySchedules.map(day => day.dayName);
-    const availableDay = DAYS_OF_WEEK.find(day => !usedDayNames.includes(day)) || `${dayToCopy.dayName} (Copy)`;
-    
     // Create deep copy of time ranges with new IDs
     const copiedTimeRanges = dayToCopy.timeRanges.map(range => ({
       ...range,
@@ -160,7 +154,7 @@ export default function TemplateModal({
     
     const copiedDay: DaySchedule = {
       id: `day_${Date.now()}_${Math.random()}`,
-      dayName: availableDay,
+      dayIndex: template.daySchedules.length,
       timeRanges: copiedTimeRanges
     };
     
@@ -171,10 +165,20 @@ export default function TemplateModal({
   };
 
   const removeDay = (dayId: string) => {
-    setTemplate(prevTemplate => ({
-      ...prevTemplate,
-      daySchedules: prevTemplate.daySchedules.filter(day => day.id !== dayId)
-    }));
+    setTemplate(prevTemplate => {
+      const newDaySchedules = prevTemplate.daySchedules.filter(day => day.id !== dayId);
+      
+      // Reindex remaining days
+      const reindexedDays = newDaySchedules.map((day, index) => ({
+        ...day,
+        dayIndex: index
+      }));
+      
+      return {
+        ...prevTemplate,
+        daySchedules: reindexedDays
+      };
+    });
     
     // Clear validation errors for removed day
     setValidationErrors(prevErrors => {
@@ -191,7 +195,15 @@ export default function TemplateModal({
         const newDaySchedules = [...prevTemplate.daySchedules];
         [newDaySchedules[dayIndex], newDaySchedules[dayIndex - 1]] = 
         [newDaySchedules[dayIndex - 1], newDaySchedules[dayIndex]];
-        return { ...prevTemplate, daySchedules: newDaySchedules };
+        
+        // Update dayIndex values to match their new positions
+        return { 
+          ...prevTemplate, 
+          daySchedules: newDaySchedules.map((day, idx) => ({
+            ...day,
+            dayIndex: idx
+          }))
+        };
       });
     }
   };
@@ -203,18 +215,17 @@ export default function TemplateModal({
         const newDaySchedules = [...prevTemplate.daySchedules];
         [newDaySchedules[dayIndex], newDaySchedules[dayIndex + 1]] = 
         [newDaySchedules[dayIndex + 1], newDaySchedules[dayIndex]];
-        return { ...prevTemplate, daySchedules: newDaySchedules };
+        
+        // Update dayIndex values to match their new positions
+        return { 
+          ...prevTemplate, 
+          daySchedules: newDaySchedules.map((day, idx) => ({
+            ...day,
+            dayIndex: idx
+          }))
+        };
       });
     }
-  };
-
-  const updateDayName = (dayId: string, newDayName: string) => {
-    setTemplate(prevTemplate => ({
-      ...prevTemplate,
-      daySchedules: prevTemplate.daySchedules.map(day =>
-        day.id === dayId ? { ...day, dayName: newDayName } : day
-      )
-    }));
   };
 
   // Time range management functions
@@ -345,7 +356,8 @@ export default function TemplateModal({
       alert(`Please fix the following time conflicts:\n\n${allErrors.join('\n')}`);
       return;
     }
-    
+    console.log("saving template");
+    console.log(template);
     onSave(template);
   };
 
@@ -383,6 +395,21 @@ export default function TemplateModal({
           />
         </div>
         
+        {/* Template Description */}
+        <div className="mb-6">
+          <label htmlFor="templateDescription" className="block text-sm font-medium text-gray-700 mb-1">
+            Description
+          </label>
+          <textarea
+            id="templateDescription"
+            value={template.description || ""}
+            onChange={(e) => setTemplate(prev => ({...prev, description: e.target.value}))}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+            placeholder="Add a brief description of this template"
+            rows={3}
+          />
+        </div>
+        
         {/* Days Section */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -415,18 +442,11 @@ export default function TemplateModal({
                     <div className="flex items-center space-x-3 flex-1">
                       <div className="flex items-center space-x-2">
                         <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                          {dayIndex + 1}
+                          {day.dayIndex + 1}
                         </span>
-                        <select
-                          value={day.dayName}
-                          onChange={(e) => updateDayName(day.id, e.target.value)}
-                          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                        >
-                          {DAYS_OF_WEEK.map(dayName => (
-                            <option key={dayName} value={dayName}>{dayName}</option>
-                          ))}
-                          <option value={`${day.dayName} (Copy)`}>{day.dayName} (Copy)</option>
-                        </select>
+                        <span className="font-medium text-gray-700">
+                          Day {day.dayIndex + 1}
+                        </span>
                       </div>
                       <div className="flex items-center">
                         <span className="text-sm font-medium px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700">
