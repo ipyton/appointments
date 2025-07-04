@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -16,94 +16,119 @@ import {
   TagIcon,
   UserGroupIcon
 } from "@heroicons/react/24/outline";
+import Service from "@/apis/Service";
 
-// Mock event data
-const mockEvents = [
-  {
-    id: "1",
-    title: "Hair Cut",
-    description: "Regular haircut service, includes wash and styling.",
-    duration: 60, // in minutes
-    price: 45.00,
-    dates: [
-      { date: "2023-10-20", slots: ["09:00", "10:00", "11:00", "14:00", "15:00"] },
-      { date: "2023-10-21", slots: ["09:00", "10:00", "11:00", "14:00", "15:00"] },
-      { date: "2023-10-22", slots: ["10:00", "11:00", "14:00"] }
-    ],
-    isActive: true,
-    createdAt: "2023-10-01T10:30:00Z"
-  },
-  {
-    id: "2",
-    title: "Massage Therapy",
-    description: "Full body massage therapy session. Choose between deep tissue, Swedish, or relaxation massage.",
-    duration: 90, // in minutes
-    price: 85.00,
-    dates: [
-      { date: "2023-10-20", slots: ["10:00", "13:00", "15:00"] },
-      { date: "2023-10-21", slots: ["10:00", "13:00", "15:00"] },
-      { date: "2023-10-23", slots: ["09:00", "11:00", "14:00", "16:00"] }
-    ],
-    isActive: true,
-    createdAt: "2023-10-02T14:15:00Z"
-  },
-  {
-    id: "3",
-    title: "Consultation",
-    description: "Initial consultation for new clients to discuss needs and goals.",
-    duration: 30, // in minutes
-    price: 25.00,
-    dates: [
-      { date: "2023-10-19", slots: ["09:00", "09:30", "10:00", "16:00", "16:30"] },
-      { date: "2023-10-20", slots: ["09:00", "09:30", "16:00", "16:30"] },
-      { date: "2023-10-24", slots: ["09:00", "09:30", "10:00", "16:00", "16:30"] }
-    ],
-    isActive: true,
-    createdAt: "2023-10-05T09:45:00Z"
-  },
-  {
-    id: "4",
-    title: "Hair Coloring",
-    description: "Professional hair coloring service. Includes consultation, coloring, and styling.",
-    duration: 120, // in minutes
-    price: 120.00,
-    dates: [
-      { date: "2023-10-22", slots: ["10:00", "13:00"] },
-      { date: "2023-10-23", slots: ["10:00", "13:00"] },
-      { date: "2023-10-25", slots: ["10:00", "13:00"] }
-    ],
-    isActive: false,
-    createdAt: "2023-10-08T11:20:00Z"
-  }
-];
+// Event interface for TypeScript
+interface Arrangement {
+  id: number;
+  serviceId: number;
+  index: number;
+  startDate: string;
+  templateId: number;
+}
+
+interface Event {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  enabled: boolean;
+  isActive: boolean;
+  providerId: string;
+  createdAt: string;
+  updatedAt: string | null;
+  allowMultipleBookings: boolean;
+  arrangements: Arrangement[];
+}
 
 export default function ProviderEventsPage() {
   const { user } = useAuth();
-  const [events, setEvents] = useState(mockEvents);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+
+  // Fetch events when component mounts
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  // Fetch events from the API
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await Service.getEvents();
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
+      
+      const data = await response.json();
+      // Ensure data is an array before setting it to state
+      setEvents(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while fetching events');
+      setEvents([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter events based on active status
   const filteredEvents = filter === "all" 
     ? events 
-    : events.filter(event => event.isActive === (filter === "active"));
+    : Array.isArray(events) ? events.filter(event => event.isActive === (filter === "active")) : [];
 
   // Toggle event active status
-  const toggleEventStatus = (id: string) => {
-    setEvents(events.map(event => 
-      event.id === id ? { ...event, isActive: !event.isActive } : event
-    ));
+  const toggleEventStatus = async (id: number) => {
+    try {
+      const event = events.find(e => e.id === id);
+      if (!event) return;
+      
+      // Update the event status via API
+      const response = await Service.updateEvent(id.toString(), { 
+        ...event, 
+        isActive: !event.isActive 
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update event status');
+      }
+      
+      // Update local state
+      setEvents(events.map(event => 
+        event.id === id ? { ...event, isActive: !event.isActive } : event
+      ));
+    } catch (err) {
+      console.error('Error updating event status:', err);
+      alert('Failed to update event status');
+    }
   };
 
   // Delete event
-  const deleteEvent = (id: string) => {
-    setEvents(events.filter(event => event.id !== id));
-    setConfirmDelete(null);
+  const deleteEvent = async (id: number) => {
+    try {
+      const response = await Service.deleteEvent(id.toString());
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete event');
+      }
+      
+      // Update local state
+      setEvents(events.filter(event => event.id !== id));
+      setConfirmDelete(null);
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      alert('Failed to delete event');
+    }
   };
 
-  // Count total available slots for an event
-  const countAvailableSlots = (event) => {
-    return event.dates.reduce((total, date) => total + date.slots.length, 0);
+  // Count total available arrangements for an event
+  const countAvailableArrangements = (event: Event) => {
+    return event.arrangements ? event.arrangements.length : 0;
   };
 
   // Format date
@@ -146,14 +171,16 @@ export default function ProviderEventsPage() {
     }
   };
 
+
+
   return (
     <motion.div 
       className="space-y-6"
       initial="hidden"
       animate="visible"
-      variants={containerVariants}
+      variants={containerVariants as any}
     >
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <motion.div variants={itemVariants as any} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold text-gray-900">My Available Events</h1>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm">
@@ -186,9 +213,51 @@ export default function ProviderEventsPage() {
         </div>
       </motion.div>
 
-      {filteredEvents.length === 0 ? (
+      {/* Loading state */}
+      {loading && (
         <motion.div 
-          variants={itemVariants}
+          variants={itemVariants as any}
+          className="bg-white rounded-xl shadow-sm p-10 text-center"
+        >
+          <div className="flex flex-col items-center">
+            <div className="mb-4">
+              <svg className="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900">Loading events...</h3>
+            <p className="text-gray-500 mt-2">Please wait while we fetch your events.</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Error state */}
+      {!loading && error && (
+        <motion.div 
+          variants={itemVariants as any}
+          className="bg-white rounded-xl shadow-sm p-10 text-center"
+        >
+          <div className="flex flex-col items-center">
+            <div className="bg-red-100 p-3 rounded-full mb-3">
+              <XMarkIcon className="h-8 w-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">Error loading events</h3>
+            <p className="text-gray-500 mb-6">{error}</p>
+            <button
+              onClick={fetchEvents}
+              className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* No events state */}
+      {!loading && !error && filteredEvents.length === 0 && (
+        <motion.div 
+          variants={itemVariants as any}
           className="bg-white rounded-xl shadow-sm p-10 text-center"
         >
           <div className="flex flex-col items-center">
@@ -206,22 +275,25 @@ export default function ProviderEventsPage() {
             </Link>
           </div>
         </motion.div>
-      ) : (
+      )}
+      
+      {/* Events list */}
+      {!loading && !error && filteredEvents.length > 0 && (
         <motion.div 
-          variants={containerVariants}
+          variants={containerVariants as any}
           className="grid grid-cols-1 lg:grid-cols-2 gap-6"
         >
           {filteredEvents.map((event) => (
             <motion.div 
               key={event.id} 
-              variants={itemVariants}
+              variants={itemVariants as any}
               className={`bg-white rounded-xl shadow-sm overflow-hidden border-t-4 ${
                 event.isActive ? "border-green-500" : "border-gray-300"
               }`}
             >
               <div className="p-6">
                 <div className="flex justify-between items-start">
-                  <h3 className="font-medium text-lg text-gray-900">{event.title}</h3>
+                  <h3 className="font-medium text-lg text-gray-900">{event.name}</h3>
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                     event.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
                   }`}>
@@ -232,49 +304,47 @@ export default function ProviderEventsPage() {
                 <p className="mt-2 text-gray-600">{event.description}</p>
                 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                    <ClockIcon className="h-3 w-3 mr-1" />
-                    {event.duration} min
-                  </span>
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
                     <CurrencyDollarIcon className="h-3 w-3 mr-1" />
                     ${event.price.toFixed(2)}
                   </span>
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
                     <UserGroupIcon className="h-3 w-3 mr-1" />
-                    {countAvailableSlots(event)} slots
+                    {countAvailableArrangements(event)} arrangements
                   </span>
+                  {event.allowMultipleBookings && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                      <UserGroupIcon className="h-3 w-3 mr-1" />
+                      Multiple bookings
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-5">
                   <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
                     <CalendarIcon className="h-4 w-4 mr-1 text-gray-500" />
-                    Available Dates
+                    Available Arrangements
                   </h4>
                   <div className="space-y-2">
-                    {event.dates.slice(0, 3).map((dateInfo, index) => (
+                    {event.arrangements.slice(0, 3).map((arrangement, index) => (
                       <div key={index} className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center">
                           <TagIcon className="h-4 w-4 text-gray-500 mr-2" />
-                          <span className="text-sm font-medium text-gray-700">{formatDate(dateInfo.date)}</span>
+                          <span className="text-sm font-medium text-gray-700">{formatDate(arrangement.startDate)}</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-1 ml-6">
-                          {dateInfo.slots.slice(0, 4).map((slot, slotIndex) => (
-                            <span key={slotIndex} className="text-xs bg-white px-2 py-1 rounded border border-gray-200 text-gray-600">
-                              {formatTime(slot)}
-                            </span>
-                          ))}
-                          {dateInfo.slots.length > 4 && (
-                            <span className="text-xs bg-white px-2 py-1 rounded border border-gray-200 text-blue-600 font-medium">
-                              +{dateInfo.slots.length - 4} more
-                            </span>
-                          )}
+                          <span className="text-xs bg-white px-2 py-1 rounded border border-gray-200 text-gray-600">
+                            Template ID: {arrangement.templateId}
+                          </span>
+                          <span className="text-xs bg-white px-2 py-1 rounded border border-gray-200 text-gray-600">
+                            Index: {arrangement.index}
+                          </span>
                         </div>
                       </div>
                     ))}
-                    {event.dates.length > 3 && (
+                    {event.arrangements.length > 3 && (
                       <div className="text-xs text-blue-600 font-medium ml-6">
-                        +{event.dates.length - 3} more dates available
+                        +{event.arrangements.length - 3} more arrangements available
                       </div>
                     )}
                   </div>
@@ -347,48 +417,48 @@ export default function ProviderEventsPage() {
 
       {/* Summary Section */}
       <motion.div 
-        variants={containerVariants}
+        variants={containerVariants as any}
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        <motion.div variants={itemVariants} className="bg-white rounded-xl p-5 shadow-sm">
+        <motion.div variants={itemVariants as any} className="bg-white rounded-xl p-5 shadow-sm">
           <div className="flex items-center">
             <div className="bg-blue-100 p-2 rounded-lg mr-4">
               <CalendarIcon className="h-6 w-6 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Events</p>
-              <p className="text-2xl font-bold text-gray-900">{events.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{Array.isArray(events) ? events.length : 0}</p>
             </div>
           </div>
         </motion.div>
         
-        <motion.div variants={itemVariants} className="bg-white rounded-xl p-5 shadow-sm">
+        <motion.div variants={itemVariants as any} className="bg-white rounded-xl p-5 shadow-sm">
           <div className="flex items-center">
             <div className="bg-green-100 p-2 rounded-lg mr-4">
               <CheckCircleIcon className="h-6 w-6 text-green-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Active Events</p>
-              <p className="text-2xl font-bold text-gray-900">{events.filter(event => event.isActive).length}</p>
+              <p className="text-2xl font-bold text-gray-900">{Array.isArray(events) ? events.filter(event => event.isActive).length : 0}</p>
             </div>
           </div>
         </motion.div>
         
-        <motion.div variants={itemVariants} className="bg-white rounded-xl p-5 shadow-sm">
+        <motion.div variants={itemVariants as any} className="bg-white rounded-xl p-5 shadow-sm">
           <div className="flex items-center">
             <div className="bg-yellow-100 p-2 rounded-lg mr-4">
               <UserGroupIcon className="h-6 w-6 text-yellow-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Available Slots</p>
+              <p className="text-sm text-gray-500">Total Arrangements</p>
               <p className="text-2xl font-bold text-gray-900">
-                {events.reduce((total, event) => total + countAvailableSlots(event), 0)}
+                {Array.isArray(events) ? events.reduce((total, event) => total + countAvailableArrangements(event), 0) : 0}
               </p>
             </div>
           </div>
         </motion.div>
         
-        <motion.div variants={itemVariants} className="bg-white rounded-xl p-5 shadow-sm">
+        <motion.div variants={itemVariants as any} className="bg-white rounded-xl p-5 shadow-sm">
           <div className="flex items-center">
             <div className="bg-purple-100 p-2 rounded-lg mr-4">
               <CurrencyDollarIcon className="h-6 w-6 text-purple-600" />
@@ -396,7 +466,7 @@ export default function ProviderEventsPage() {
             <div>
               <p className="text-sm text-gray-500">Avg. Price</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${(events.reduce((total, event) => total + event.price, 0) / events.length).toFixed(2)}
+                ${Array.isArray(events) && events.length > 0 ? (events.reduce((total, event) => total + event.price, 0) / events.length).toFixed(2) : "0.00"}
               </p>
             </div>
           </div>

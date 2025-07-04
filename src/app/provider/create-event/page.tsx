@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -9,13 +9,21 @@ import { ImageUploadSection } from "@/components/events/ImageUploadSection";
 import { ScheduleSection } from "@/components/events/ScheduleSection";
 import { RepeatSettingsSection } from "@/components/events/RepeatSettingsSection";
 import { SubmitButtonsSection } from "@/components/events/SubmitButtonsSection";
+import { EventSubmitter } from "@/components/events/EventSubmitter";
 import { TimeSlot, TimeTemplate, SchedulePreview, RepeatConfig, DateSlot } from "@/components/events/types";
+import Templates from "@/apis/Templates";
+import { Template, TimeRange } from "@/types/templates";
+
+// Extended Template interface for our component
+interface ExtendedTemplate extends Omit<Template, 'daySchedules'> {
+  timeSlots: TimeSlot[];
+}
 
 export default function CreateEventPage() {
   const { user } = useAuth();
   const router = useRouter();
   
-  const [title, setTitle] = useState("");
+  const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState(60);
   const [price, setPrice] = useState("");
@@ -44,49 +52,38 @@ export default function CreateEventPage() {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeTemplates, setTimeTemplates] = useState<ExtendedTemplate[]>([]);
+  const [validSchedules, setValidSchedules] = useState<any[]>([]);
 
-  // Predefined time templates
-  const timeTemplates: TimeTemplate[] = [
-    {
-      id: 'morning',
-      name: 'Morning Sessions',
-      timeSlots: [
-        { startTime: '09:00', endTime: '10:00' },
-        { startTime: '10:30', endTime: '11:30' },
-        { startTime: '12:00', endTime: '13:00' }
-      ]
-    },
-    {
-      id: 'afternoon',
-      name: 'Afternoon Sessions',
-      timeSlots: [
-        { startTime: '14:00', endTime: '15:00' },
-        { startTime: '15:30', endTime: '16:30' },
-        { startTime: '17:00', endTime: '18:00' }
-      ]
-    },
-    {
-      id: 'evening',
-      name: 'Evening Sessions',
-      timeSlots: [
-        { startTime: '18:00', endTime: '19:00' },
-        { startTime: '19:30', endTime: '20:30' },
-        { startTime: '21:00', endTime: '22:00' }
-      ]
-    },
-    {
-      id: 'full_day',
-      name: 'Full Day Schedule',
-      timeSlots: [
-        { startTime: '09:00', endTime: '10:00' },
-        { startTime: '10:30', endTime: '11:30' },
-        { startTime: '13:00', endTime: '14:00' },
-        { startTime: '14:30', endTime: '15:30' },
-        { startTime: '16:00', endTime: '17:00' },
-        { startTime: '17:30', endTime: '18:30' }
-      ]
-    }
-  ];
+  useEffect(() => {
+    Templates.getTemplates().then(response => {
+      if (response.ok) {
+        response.json().then(data => {
+          // Transform the template data to include timeSlots
+          const extendedTemplates = data.map((template: Template) => {
+            // Extract all time ranges from day schedules and flatten into timeSlots
+            const timeSlots = template.daySchedules.flatMap(day => 
+              day.timeRanges.map(range => ({
+                startTime: range.startTime,
+                endTime: range.endTime
+              }))
+            );
+            
+            return {
+              ...template,
+              timeSlots
+            };
+          });
+          
+          setTimeTemplates(extendedTemplates);
+        });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log("Valid schedules updated:", validSchedules);
+  }, [validSchedules]);
 
   // Handle template selection
   const handleTemplateChange = (templateId: string) => {
@@ -169,7 +166,7 @@ export default function CreateEventPage() {
           });
         } else {
           // Add template time slots
-          const template = timeTemplates.find(t => t.id === templateId);
+          const template = timeTemplates.find(t => String(t.id) === templateId);
           if (template) {
             template.timeSlots.forEach((slot, index) => {
               slots.push({
@@ -267,81 +264,96 @@ export default function CreateEventPage() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Validate form
-    if (!title || !description || !duration || !price || !startDate || selectedTemplates.length === 0) {
-      alert("Please fill in all required fields and select at least one time template");
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Check if custom time slots are filled when custom template is selected
-    if (selectedTemplates.includes('custom')) {
-      const hasValidTimeSlots = customTimeSlots.every(slot => 
-        slot.startTime && slot.endTime
-      );
-
-      if (!hasValidTimeSlots) {
-        alert("Please fill in all custom time slots");
-        setIsSubmitting(false);
-        return;
-      }
-    }
-
     try {
-      // Generate all event dates
-      const eventDates = generateRepeatedDates(startDate, repeatConfig);
+      // Get submitEvent function from EventSubmitter
+      const { submitEvent } = await import('@/components/events/EventSubmitter');
       
-      // Collect all time slots from selected templates
-      let allTimeSlots: TimeSlot[] = [];
-      
-      selectedTemplates.forEach(templateId => {
+      // Prepare scheduleData from templates and custom slots
+      const scheduleData = selectedTemplates.map(templateId => {
         if (templateId === 'custom') {
-          allTimeSlots = [...allTimeSlots, ...customTimeSlots];
+          return {
+            id: 'custom',
+            name: 'Custom Schedule',
+            timeSlots: customTimeSlots
+          };
         } else {
-          const template = timeTemplates.find(t => t.id === templateId);
-          if (template) {
-            allTimeSlots = [...allTimeSlots, ...template.timeSlots];
-          }
+          const template = timeTemplates.find(t => String(t.id) === templateId);
+          return template;
         }
-      });
+      }).filter(Boolean);
       
-      // Sort time slots by start time
-      allTimeSlots.sort((a, b) => a.startTime.localeCompare(b.startTime));
-      
-      // Create date slots for each generated date
-      const generatedDateSlots = eventDates.map(date => ({
-        date,
-        timeSlots: [...allTimeSlots]
-      }));
+      // Check if custom time slots are filled when custom template is selected
+      if (selectedTemplates.includes('custom')) {
+        const hasValidTimeSlots = customTimeSlots.every(slot => 
+          slot.startTime && slot.endTime
+        );
 
-      const eventData = {
-        title,
-        description,
-        duration,
-        price: parseFloat(price),
-        dateSlots: generatedDateSlots,
-        providerId: user?.id,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        image: eventImage,
-        repeatConfig: repeatConfig.enabled ? repeatConfig : null,
-        templates: selectedTemplates
-      };
-      
-      console.log("Event Data:", eventData);
-      
-      // In a real app, you would upload the image and send data to your backend
-      // const formData = new FormData();
-      // formData.append('eventData', JSON.stringify(eventData));
-      // if (eventImage) formData.append('image', eventImage);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      // Redirect to events page
-      router.push("/provider/events");
+        if (!hasValidTimeSlots) {
+          alert("Please fill in all custom time slots");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      try {
+        // Generate all event dates
+        const eventDates = generateRepeatedDates(startDate, repeatConfig);
+        
+        // Collect all time slots from selected templates
+        let allTimeSlots: TimeSlot[] = [];
+        
+        selectedTemplates.forEach(templateId => {
+          if (templateId === 'custom') {
+            allTimeSlots = [...allTimeSlots, ...customTimeSlots];
+          } else {
+            const template = timeTemplates.find(t => String(t.id) === templateId);
+            if (template) {
+              allTimeSlots = [...allTimeSlots, ...template.timeSlots];
+            }
+          }
+        });
+        
+        // Sort time slots by start time
+        allTimeSlots.sort((a, b) => a.startTime.localeCompare(b.startTime));
+        
+        // Create date slots for each generated date
+        const generatedDateSlots = eventDates.map(date => ({
+          date,
+          timeSlots: [...allTimeSlots]
+        }));
+
+        const eventData = {
+          name,
+          description,
+          duration,
+          price: parseFloat(price),
+          dateSlots: generatedDateSlots,
+          providerId: user?.id,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          image: eventImage,
+          repeatConfig: repeatConfig.enabled ? repeatConfig : null,
+          templates: selectedTemplates
+        };
+        
+        console.log("Event Data:", eventData);
+        
+        // In a real app, you would upload the image and send data to your backend
+        // const formData = new FormData();
+        // formData.append('eventData', JSON.stringify(eventData));
+        // if (eventImage) formData.append('image', eventImage);
+        
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        
+        // Redirect to events page
+        router.push("/provider/events");
+      } catch (error) {
+        console.error("Error creating event:", error);
+        setIsSubmitting(false);
+      }
     } catch (error) {
-      console.error("Error creating event:", error);
+      console.error("Error importing EventSubmitter:", error);
       setIsSubmitting(false);
     }
   };
@@ -378,11 +390,11 @@ export default function CreateEventPage() {
     >
       <motion.h1 variants={itemVariants} className="text-3xl font-bold mb-8 text-gray-900 border-b pb-4">Create New Event</motion.h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
         {/* Event Details Section */}
         <EventDetailsSection
-          title={title}
-          setTitle={setTitle}
+          name={name}
+          setName={setName}
           description={description}
           setDescription={setDescription}
           duration={duration}
@@ -403,40 +415,52 @@ export default function CreateEventPage() {
 
         {/* Schedule Setup Section */}
         <ScheduleSection
-          startDate={startDate}
-          setStartDate={setStartDate}
-          selectedTemplates={selectedTemplates}
-          setSelectedTemplates={setSelectedTemplates}
-          customTimeSlots={customTimeSlots}
-          setCustomTimeSlots={setCustomTimeSlots}
-          showPreview={showPreview}
-          setShowPreview={setShowPreview}
-          schedulePreview={schedulePreview}
-          timeTemplates={timeTemplates}
-          handleTemplateChange={handleTemplateChange}
-          addCustomTimeSlot={addCustomTimeSlot}
-          removeCustomTimeSlot={removeCustomTimeSlot}
-          handleCustomTimeSlotChange={handleCustomTimeSlotChange}
-          generateSchedulePreview={generateSchedulePreview}
-          handleDateChange={handleDateChange}
-          formatTime={formatTime}
-          formatDate={formatDate}
-          itemVariants={itemVariants}
+          timeTemplates={timeTemplates as unknown as Template[]}
+          onScheduleChange={setValidSchedules}
         />
 
         {/* Repeat Settings Section */}
-        <RepeatSettingsSection
+        {/* <RepeatSettingsSection
           repeatConfig={repeatConfig}
           setRepeatConfig={setRepeatConfig}
           startDate={startDate}
           itemVariants={itemVariants}
-        />
+        /> */}
 
-        {/* Submit Buttons */}
-        <SubmitButtonsSection
-          isSubmitting={isSubmitting}
-          itemVariants={itemVariants}
-        />
+        {/* Submit Buttons Section */}
+        <motion.div variants={itemVariants} className="flex justify-end space-x-4 pt-4 mt-6 border-t">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm"
+          >
+            Cancel
+          </button>
+          
+          <EventSubmitter 
+            eventData={{
+              name,
+              description,
+              duration,
+              price,
+              eventImage,
+              startDate,
+              scheduleData: validSchedules,
+              repeatConfig
+            }}
+            redirectOnSuccess={true}
+            redirectPath="/provider/events"
+            showAlerts={true}
+            buttonText={
+              <>
+                <svg className="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Create Event
+              </>
+            }
+          />
+        </motion.div>
       </form>
     </motion.div>
   );

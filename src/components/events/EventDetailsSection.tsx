@@ -2,8 +2,8 @@ import { DocumentTextIcon, ClockIcon, CurrencyDollarIcon } from "@heroicons/reac
 import { motion } from "framer-motion";
 
 interface EventDetailsSectionProps {
-  title: string;
-  setTitle: (value: string) => void;
+  name: string;
+  setName: (value: string) => void;
   description: string;
   setDescription: (value: string) => void;
   duration: number;
@@ -14,8 +14,8 @@ interface EventDetailsSectionProps {
 }
 
 export const EventDetailsSection = ({
-  title,
-  setTitle,
+  name,
+  setName,
   description,
   setDescription,
   duration,
@@ -38,8 +38,8 @@ export const EventDetailsSection = ({
         <input
           type="text"
           id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
           placeholder="e.g. Hair Cut, Massage Therapy"
           required

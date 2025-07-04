@@ -6,12 +6,19 @@ export interface TimeRange {
   selected?: boolean;
 }
 
+// Interface for day schedule
+export interface DaySchedule {
+  id: string;
+  dayIndex: number;
+  timeRanges: TimeRange[];
+}
+
 // Interface for template
 export interface Template {
   id: number;
   name: string;
   description?: string;
-  timeRanges: TimeRange[];
+  daySchedules: DaySchedule[];
 }
 
 // Helper function to format time to display in 12-hour format

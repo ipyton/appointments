@@ -36,14 +36,15 @@ export default function TemplatesPage() {
 
   // Load templates from localStorage
   useEffect(() => {
-    const savedTemplates = localStorage.getItem('providerTemplates');
-    if (savedTemplates) {
-      try {
-        setTemplates(JSON.parse(savedTemplates));
-      } catch (e) {
-        console.error("Error loading templates:", e);
+    Templates.getTemplates().then(response => {
+      if (response.ok) {
+        response.json().then(data => {
+          console.log(data);
+          setTemplates(data);
+        });
       }
-    }
+    });
+    
   }, []);
   
   // Save templates to localStorage when they change

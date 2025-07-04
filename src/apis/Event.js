@@ -1,10 +1,10 @@
 import { URL } from "./URL";
 
-export default class Service {
-  static async createService(serviceData) {
-    return fetch(`${URL}/services/create`, {
+export default class Event {
+  static async createEvent(eventData) {
+    return fetch(`${URL}/event/create`, {
       method: 'POST',
-      body: JSON.stringify(serviceData),
+      body: JSON.stringify(eventData),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -13,7 +13,7 @@ export default class Service {
   }
 
   static async updateEvent(eventId, eventData) {
-    return fetch(`${URL}/services/${eventId}/update`, {
+    return fetch(`${URL}/event/${eventId}/update`, {
       method: 'PUT',
       body: JSON.stringify(eventData),
       headers: {
@@ -24,7 +24,7 @@ export default class Service {
   }
 
   static async getEvents() {
-    return fetch(`${URL}/services/get-all`, {
+    return fetch(`${URL}/event/list`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -32,7 +32,7 @@ export default class Service {
   }
 
   static async getEventById(eventId) {
-    return fetch(`${URL}/services/${eventId}`, {
+    return fetch(`${URL}/event/${eventId}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -40,7 +40,7 @@ export default class Service {
   }
 
   static async deleteEvent(eventId) {
-    return fetch(`${URL}/services/${eventId}/delete`, {
+    return fetch(`${URL}/event/${eventId}/delete`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -52,7 +52,7 @@ export default class Service {
     const formData = new FormData();
     formData.append('image', imageFile);
 
-    return fetch(`${URL}/services/${eventId}/upload-image`, {
+    return fetch(`${URL}/event/${eventId}/upload-image`, {
       method: 'POST',
       body: formData,
       headers: {
