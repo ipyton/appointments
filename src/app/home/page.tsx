@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import ProfileLink from "@/components/ProfileLink";
 
 export default function HomePage() {
   const { user, logout } = useAuth();
@@ -14,31 +13,6 @@ export default function HomePage() {
     logout();
     router.push("/login");
   };
-
-  // Featured providers data
-  const featuredProviders = [
-    {
-      id: '4',
-      name: 'StyleHub Salon',
-      type: 'Provider',
-      image: 'https://placehold.co/100x100?text=StyleHub',
-      description: 'Premium hair styling and beauty treatments'
-    },
-    {
-      id: '1',
-      name: 'Haircut and Styling Service',
-      type: 'Provider',
-      image: 'https://placehold.co/100x100?text=Haircut',
-      description: 'Professional haircut and styling service by expert stylists'
-    },
-    {
-      id: '2',
-      name: 'Beauty Salon Services',
-      type: 'Provider',
-      image: 'https://placehold.co/100x100?text=Beauty',
-      description: 'Full-service beauty salon offering everything from facials to manicures'
-    }
-  ];
 
   return (
     <div className="grid grid-rows-[auto_1fr_auto] min-h-screen font-[family-name:var(--font-geist-sans)]">
@@ -155,47 +129,6 @@ export default function HomePage() {
                 Register as Provider
               </Link>
             )}
-          </div>
-        </div>
-
-        {/* Featured Providers Section */}
-        <div className="mt-16 w-full">
-          <h2 className="text-2xl font-bold mb-6 text-center">Featured Providers</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {featuredProviders.map(provider => (
-              <Link key={provider.id} href={`/profiles/${provider.id}`} className="block">
-                <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-5 h-full flex flex-col">
-                  <div className="flex items-start mb-4">
-                    <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-full overflow-hidden mr-4">
-                      <Image
-                        src={provider.image}
-                        alt={provider.name}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-1">{provider.name}</h3>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        Provider
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 flex-grow">{provider.description}</p>
-                  <div className="mt-4 text-sm text-blue-600 font-medium">View profile →</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-6 text-center">
-            <Link href="/search" className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
-              View All Providers
-              <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </Link>
           </div>
         </div>
 

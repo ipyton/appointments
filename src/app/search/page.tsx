@@ -15,19 +15,6 @@ interface SearchResult {
   url: string;
 }
 
-// Loading component to show while suspense is active
-function SearchLoading() {
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="flex flex-col items-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="mt-4 text-gray-700 font-medium">Loading search results...</p>
-      </div>
-    </div>
-  );
-}
-
-// Component that uses useSearchParams
 function SearchResultsContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
@@ -43,7 +30,7 @@ function SearchResultsContent() {
       description: 'Professional haircut and styling service by expert stylists',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Haircut',
-      url: '/profiles/1'
+      url: '/user/events/haircut'
     },
     {
       id: '2',
@@ -51,7 +38,7 @@ function SearchResultsContent() {
       description: 'Book a session at our premium beauty salon',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Beauty',
-      url: '/profiles/2'
+      url: '/user/events/beauty-salon'
     },
     {
       id: '3',
@@ -59,7 +46,7 @@ function SearchResultsContent() {
       description: 'Relaxing massage therapy session with certified therapists',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Massage',
-      url: '/profiles/3'
+      url: '/user/events/massage'
     },
     {
       id: '4',
@@ -67,7 +54,7 @@ function SearchResultsContent() {
       description: 'Premium hair styling and beauty treatments',
       type: 'Provider',
       image: 'https://placehold.co/100x100?text=StyleHub',
-      url: '/profiles/4'
+      url: '/provider/stylehub'
     },
     {
       id: '5',
@@ -75,7 +62,7 @@ function SearchResultsContent() {
       description: 'Expert financial planning and investment advice',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Finance',
-      url: '/profiles/5'
+      url: '/user/events/financial'
     },
     {
       id: '6',
@@ -83,7 +70,7 @@ function SearchResultsContent() {
       description: 'Beginner to advanced yoga classes with experienced instructors',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Yoga',
-      url: '/profiles/6'
+      url: '/user/events/yoga'
     }
   ];
 
@@ -157,6 +144,16 @@ function SearchResultsContent() {
             All
           </button>
           <button 
+            onClick={() => setFilter('Provider')}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              filter === 'Provider' 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            Events
+          </button>
+          <button 
             onClick={() => setFilter('Service')}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               filter === 'Service' 
@@ -222,7 +219,7 @@ function SearchResultsContent() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 flex-grow">{result.description}</p>
-                  <div className="mt-4 text-sm text-blue-600 font-medium">View profile →</div>
+                  <div className="mt-4 text-sm text-blue-600 font-medium">View details →</div>
                 </div>
               </Link>
             ))}
@@ -233,7 +230,15 @@ function SearchResultsContent() {
   );
 }
 
-// Main component with Suspense boundary
+// Loading fallback for the Suspense boundary
+function SearchLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  );
+}
+
 export default function SearchResults() {
   return (
     <Suspense fallback={<SearchLoading />}>
