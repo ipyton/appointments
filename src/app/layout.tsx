@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ChatProvider } from "@/context/ChatContext";
+import GlobalSearchButton from "@/components/GlobalSearchButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,9 @@ export default function RootLayout({
         <AuthProvider>
           <ChatProvider>
             {children}
+            <div className="fixed bottom-6 right-6 z-50">
+              <GlobalSearchButton />
+            </div>
           </ChatProvider>
         </AuthProvider>
       </body>

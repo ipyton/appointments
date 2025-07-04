@@ -72,7 +72,7 @@ const Chat = {
     const newMessage = {
       id: `msg${mockMessages.length + 1}`,
       senderId: currentUserId,
-      senderName: currentUser.name,
+                  senderName: currentUser.fullName,
       receiverId,
       content,
       timestamp: new Date().toISOString(),

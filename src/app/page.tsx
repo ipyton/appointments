@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { URL } from "@/apis/URL";
 import { useAuth } from "@/context/AuthContext";
+import SearchBar from "@/components/SearchBar";
 
 export default function Home() {
   const router = useRouter();
@@ -45,6 +46,12 @@ export default function Home() {
             >
               FAQ
             </Link>
+            <Link
+              href="/search"
+              className="text-white hover:text-blue-200 transition-colors"
+            >
+              Search
+            </Link>
           </div>
           <div className="flex items-center space-x-4">
             <Link
@@ -71,6 +78,17 @@ export default function Home() {
             <p className="text-xl mb-8 text-white">
               A seamless platform connecting service providers with users for effortless appointment booking and management.
             </p>
+            
+            {/* Search bar */}
+            <div className="mb-8">
+              <div className="bg-white/10 backdrop-blur-sm p-1 rounded-lg">
+                <SearchBar 
+                  placeholder="Search for services, appointments, providers..." 
+                  className="w-full"
+                />
+              </div>
+            </div>
+            
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Link
                 href="/register?role=user"

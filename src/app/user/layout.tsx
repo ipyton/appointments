@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import SearchBar from "@/components/SearchBar";
 import ChatBox from "@/components/ChatBox";
 
 export default function UserLayout({
@@ -62,9 +63,16 @@ export default function UserLayout({
             
             {/* Desktop navigation */}
             <div className="hidden md:flex items-center space-x-4">
+              {/* Search Bar */}
+              <div className="relative w-64">
+                <SearchBar placeholder="Search..." className="w-full" />
+              </div>
+              
+              <div className="h-4 w-px bg-gray-300"></div>
+              
               <div className="flex items-center space-x-1">
                 <span className="text-gray-600">Welcome,</span>
-                <span className="font-medium text-blue-700">{user.name}</span>
+                <span className="font-medium text-blue-700">{user.fullName}</span>
               </div>
               <div className="h-4 w-px bg-gray-300"></div>
               <Link 
@@ -106,7 +114,7 @@ export default function UserLayout({
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-200 pt-2 pb-3 space-y-1 shadow-lg">
             <div className="px-4 py-2 flex items-center">
-              <span className="text-sm text-gray-600">Welcome, <span className="font-medium text-blue-700">{user.name}</span></span>
+              <span className="text-sm text-gray-600">Welcome, <span className="font-medium text-blue-700">{user.fullName}</span></span>
             </div>
             <Link 
               href="/profile"

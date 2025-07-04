@@ -27,7 +27,7 @@ export default function Profile() {
     if (!isLoading && !user) {
       router.push("/login");
     } else if (user) {
-      setName(user.name || "");
+      setName(user.fullName || "");
       setEmail(user.email || "");
       // Set avatar URL from user object if available
       setAvatarUrl(user.avatar || null);
@@ -66,7 +66,7 @@ export default function Profile() {
   const handleEditToggle = () => {
     if (isEditing) {
       // Cancel editing
-      setName(user?.name || "");
+      setName(user?.fullName || "");
       setEmail(user?.email || "");
       setAvatarUrl(user?.avatar || null); // Reset to original avatar
       setAvatarFile(null);
@@ -83,7 +83,7 @@ export default function Profile() {
     try {
       // Update profile using the AuthContext function
       const result = await updateProfile({
-        name,
+        fullName: name,
         email,
       }, avatarFile);
       
@@ -187,7 +187,7 @@ export default function Profile() {
               {/* User info */}
               <div className="flex-1">
                 <div className="text-center sm:text-left">
-                  <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{user.fullName}</h2>
                   <p className="text-gray-500">{user.email}</p>
                   <p className="mt-1 inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full capitalize">
                     {user.role}

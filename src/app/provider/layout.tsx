@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import SearchBar from "@/components/SearchBar";
 import {
   CalendarIcon,
   InboxIcon,
@@ -83,6 +84,12 @@ export default function ProviderLayout({
                         priority
                       />
                     </Link>
+                  </div>
+                  <div className="ml-6 hidden md:flex items-center">
+                    <SearchBar 
+                      placeholder="Search appointments, clients..." 
+                      className="w-64"
+                    />
                   </div>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -180,7 +187,7 @@ export default function ProviderLayout({
                     </div>
                   </div>
                   <div className="ml-3">
-                    <div className="text-base font-medium text-gray-800">{user.name}</div>
+                                                  <div className="text-base font-medium text-gray-800">{user.fullName}</div>
                     <div className="text-sm font-medium text-gray-500">{user.email}</div>
                   </div>
                 </div>
