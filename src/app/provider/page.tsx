@@ -76,7 +76,7 @@ export default function ProviderDashboardPage() {
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100
       }
     }
@@ -104,7 +104,7 @@ export default function ProviderDashboardPage() {
         <div className="absolute top-0 right-0 -mt-4 -mr-16 opacity-20">
           <CalendarIcon className="h-32 w-32" />
         </div>
-        <h2 className="text-xl font-semibold mb-2">Welcome back, {user?.name}!</h2>
+        <h2 className="text-xl font-semibold mb-2">Welcome back, {user?.fullName}!</h2>
         <p className="opacity-90 max-w-lg">
           You have {stats.pendingInvitations} pending appointment requests and {stats.upcomingToday} appointments scheduled for today.
         </p>

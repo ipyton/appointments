@@ -116,6 +116,8 @@ export default function BookingsPage() {
   };
   
   const getStatusBadge = (status: string) => {
+    type BookingStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
+    
     const statusConfig = {
       confirmed: {
         bg: 'bg-green-100',
@@ -159,7 +161,7 @@ export default function BookingsPage() {
       }
     };
     
-    const config = statusConfig[status] || statusConfig.pending;
+    const config = statusConfig[status as BookingStatus] || statusConfig.pending;
     
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>

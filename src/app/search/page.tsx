@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import SearchBar from '@/components/SearchBar';
@@ -15,7 +15,20 @@ interface SearchResult {
   url: string;
 }
 
-export default function SearchResults() {
+// Loading component to show while suspense is active
+function SearchLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex flex-col items-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+        <p className="mt-4 text-gray-700 font-medium">Loading search results...</p>
+      </div>
+    </div>
+  );
+}
+
+// Component that uses useSearchParams
+function SearchResultsContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -30,7 +43,7 @@ export default function SearchResults() {
       description: 'Professional haircut and styling service by expert stylists',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Haircut',
-      url: '/user/events/haircut'
+      url: '/profiles/1'
     },
     {
       id: '2',
@@ -38,7 +51,7 @@ export default function SearchResults() {
       description: 'Book a session at our premium beauty salon',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Beauty',
-      url: '/user/events/beauty-salon'
+      url: '/profiles/2'
     },
     {
       id: '3',
@@ -46,7 +59,7 @@ export default function SearchResults() {
       description: 'Relaxing massage therapy session with certified therapists',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Massage',
-      url: '/user/events/massage'
+      url: '/profiles/3'
     },
     {
       id: '4',
@@ -54,7 +67,7 @@ export default function SearchResults() {
       description: 'Premium hair styling and beauty treatments',
       type: 'Provider',
       image: 'https://placehold.co/100x100?text=StyleHub',
-      url: '/provider/stylehub'
+      url: '/profiles/4'
     },
     {
       id: '5',
@@ -62,7 +75,7 @@ export default function SearchResults() {
       description: 'Expert financial planning and investment advice',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Finance',
-      url: '/user/events/financial'
+      url: '/profiles/5'
     },
     {
       id: '6',
@@ -70,7 +83,7 @@ export default function SearchResults() {
       description: 'Beginner to advanced yoga classes with experienced instructors',
       type: 'Service',
       image: 'https://placehold.co/100x100?text=Yoga',
-      url: '/user/events/yoga'
+      url: '/profiles/6'
     }
   ];
 
@@ -144,16 +157,6 @@ export default function SearchResults() {
             All
           </button>
           <button 
-            onClick={() => setFilter('Provider')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              filter === 'Provider' 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Events
-          </button>
-          <button 
             onClick={() => setFilter('Service')}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               filter === 'Service' 
@@ -219,7 +222,7 @@ export default function SearchResults() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 flex-grow">{result.description}</p>
-                  <div className="mt-4 text-sm text-blue-600 font-medium">View details →</div>
+                  <div className="mt-4 text-sm text-blue-600 font-medium">View profile →</div>
                 </div>
               </Link>
             ))}
@@ -227,5 +230,14 @@ export default function SearchResults() {
         )}
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function SearchResults() {
+  return (
+    <Suspense fallback={<SearchLoading />}>
+      <SearchResultsContent />
+    </Suspense>
   );
 }   

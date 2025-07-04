@@ -3,8 +3,32 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
+interface Booking {
+  id: string;
+  eventId: string;
+  title: string;
+  provider: string;
+  publisher: string;
+  date: string;
+  time: string;
+  duration: number;
+  status: string;
+  avatar: string;
+}
+
+interface CalendarDay {
+  date: Date;
+  isCurrentMonth: boolean;
+  events: Booking[];
+}
+
+interface HoverPosition {
+  x: number;
+  y: number;
+}
+
 // Mock bookings data
-const MOCK_BOOKINGS = [
+const MOCK_BOOKINGS: Booking[] = [
   {
     id: "b1",
     eventId: "1",
@@ -68,13 +92,13 @@ const MOCK_BOOKINGS = [
 ];
 
 // Helper function to generate calendar days
-const generateCalendarDays = (year, month) => {
+const generateCalendarDays = (year: number, month: number): CalendarDay[] => {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
   const startingDayOfWeek = firstDay.getDay();
   
-  const days = [];
+  const days: CalendarDay[] = [];
   
   // Add previous month's days
   const prevMonthLastDay = new Date(year, month, 0).getDate();
@@ -109,13 +133,13 @@ const generateCalendarDays = (year, month) => {
 };
 
 export default function CalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [calendarDays, setCalendarDays] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [hoveredEvent, setHoveredEvent] = useState(null);
-  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedEvent, setSelectedEvent] = useState<Booking | null>(null);
+  const [hoveredEvent, setHoveredEvent] = useState<Booking | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<HoverPosition>({ x: 0, y: 0 });
   
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -156,11 +180,11 @@ export default function CalendarPage() {
     setCurrentDate(new Date());
   };
   
-  const handleEventClick = (event) => {
+  const handleEventClick = (event: Booking) => {
     setSelectedEvent(event);
   };
   
-  const handleEventHover = (event, e) => {
+  const handleEventHover = (event: Booking, e: React.MouseEvent) => {
     setHoveredEvent(event);
     const rect = e.currentTarget.getBoundingClientRect();
     setHoverPosition({
@@ -177,7 +201,7 @@ export default function CalendarPage() {
     setSelectedEvent(null);
   };
   
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
         return 'bg-emerald-500';
@@ -190,7 +214,7 @@ export default function CalendarPage() {
     }
   };
   
-  const getEventStyles = (status) => {
+  const getEventStyles = (status: string) => {
     switch (status) {
       case 'confirmed':
         return 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white border-emerald-300 shadow-emerald-200';
@@ -206,7 +230,7 @@ export default function CalendarPage() {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
   const today = new Date();
-  const isToday = (date) => {
+  const isToday = (date: Date) => {
     return date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear();

@@ -261,7 +261,7 @@ export default function Profile() {
                         placeholder="Your name"
                       />
                     ) : (
-                      <p className="text-gray-900 font-medium">{user.name}</p>
+                      <p className="text-gray-900 font-medium">{user.fullName}</p>
                     )}
                   </div>
                   

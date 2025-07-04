@@ -33,7 +33,7 @@ export default function UserDashboard() {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Welcome, {user?.name}</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Welcome, {user?.fullName}</h1>
         <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm font-medium shadow-sm">
           User Account
         </span>

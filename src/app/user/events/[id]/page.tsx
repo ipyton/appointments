@@ -3,8 +3,37 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Clock, MapPin, MessageCircle, X } from "lucide-react";
 
+// Define TypeScript interfaces
+interface Slot {
+  id: string;
+  date: string;
+  time: string;
+}
+
+interface Event {
+  id: string;
+  title: string;
+  provider: string;
+  category: string;
+  description: string;
+  longDescription: string;
+  duration: number;
+  price: number;
+  image: string;
+  location: string;
+  allowMultipleBookings: boolean;
+  availableSlots: Slot[];
+}
+
+interface ChatMessage {
+  id: number;
+  sender: string;
+  text: string;
+  timestamp: Date;
+}
+
 // Mock event data with allowMultipleBookings attribute
-const MOCK_EVENTS = [
+const MOCK_EVENTS: Event[] = [
   {
     id: "1",
     title: "Dental Checkup",
@@ -54,48 +83,48 @@ const MOCK_EVENTS = [
 ];
 
 export default function EventDetailPage() {
-  const [event, setEvent] = useState(MOCK_EVENTS[0]); // Default to first event for demo
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedSlots, setSelectedSlots] = useState([]);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
+  const [event, setEvent] = useState<Event>(MOCK_EVENTS[0]); // Default to first event for demo
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { id: 1, sender: 'consultant', text: `Hello! I'm here to help you with your ${event.title.toLowerCase()} booking. How can I assist you today?`, timestamp: new Date() }
   ]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState<string>('');
 
   // Get available dates for the event
   const availableDates = [...new Set(event.availableSlots.map(slot => slot.date))];
 
   // Get slots for selected date
-  const getSlotsForDate = (date) => {
+  const getSlotsForDate = (date: string) => {
     if (!date) return [];
     return event.availableSlots.filter(slot => slot.date === date);
   };
 
   // Calendar helper functions
-  const getDaysInMonth = (date) => {
+  const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
 
-  const getFirstDayOfMonth = (date) => {
+  const getFirstDayOfMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
 
-  const formatDate = (year, month, day) => {
+  const formatDate = (year: number, month: number, day: number) => {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
-  const isDateAvailable = (dateStr) => {
+  const isDateAvailable = (dateStr: string) => {
     return availableDates.includes(dateStr);
   };
 
-  const handleDateSelect = (dateStr) => {
+  const handleDateSelect = (dateStr: string) => {
     setSelectedDate(dateStr);
     setSelectedSlots([]); // Reset selected slots when date changes
   };
 
-  const handleSlotSelect = (slotId) => {
+  const handleSlotSelect = (slotId: string) => {
     if (event.allowMultipleBookings) {
       // Multiple selection
       setSelectedSlots(prev => 
