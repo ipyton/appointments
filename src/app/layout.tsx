@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Appointments System",
+  title: "AppointEase",
   description: "Book and manage appointments with service providers",
 };
 

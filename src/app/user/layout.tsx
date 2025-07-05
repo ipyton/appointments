@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+
 import SearchBar from "@/components/SearchBar";
 import ChatBox from "@/components/ChatBox";
 
@@ -54,15 +54,11 @@ export default function UserLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/home" className="flex-shrink-0 transition-transform hover:scale-105">
-                <Image
-                  className="h-8 w-auto"
-                  src="/next.svg"
-                  alt="Appointments Logo"
-                  width={120}
-                  height={30}
-                  priority
-                />
+              <Link 
+                href="/home" 
+                className="text-xl font-bold text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                AppointEase
               </Link>
             </div>
             
@@ -184,7 +180,7 @@ export default function UserLayout({
       
       <footer className="bg-white border-t border-gray-200 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <p className="text-center text-sm text-gray-500">© {new Date().getFullYear()} Appointments. All rights reserved.</p>
+          <p className="text-center text-sm text-gray-500">© {new Date().getFullYear()} AppointEase. All rights reserved.</p>
         </div>
       </footer>
 

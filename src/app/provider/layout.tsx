@@ -76,15 +76,8 @@ export default function ProviderLayout({
               <div className="flex h-16 justify-between">
                 <div className="flex">
                   <div className="flex flex-shrink-0 items-center">
-                    <Link href="/home">
-                      <Image
-                        className="h-8 w-auto"
-                        src="/next.svg"
-                        alt="Appointments"
-                        width={120}
-                        height={30}
-                        priority
-                      />
+                    <Link href="/home" className="text-xl font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                      AppointEase
                     </Link>
                   </div>
                   <div className="ml-6 hidden md:flex items-center">

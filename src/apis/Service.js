@@ -27,6 +27,17 @@ export default class Service {
     });
   }
 
+  static async getServicesByPage(page) {
+    const token = localStorage.getItem("token") ;
+    
+    return fetch(`${URL}/services/paged?page=${page}`, {
+      method: 'GET',
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      }
+    });
+  }
+
   static async getEvents() {
     const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
     
@@ -72,4 +83,30 @@ export default class Service {
       }
     });
   }
+
+
+  static async getSlotsByDate(date, serviceId) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    
+    return fetch(`${URL}/services/slots-by-date`, {
+      method: 'GET',
+      body: JSON.stringify({date, serviceId}),
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      }
+    });
+  }
+
+  static async getSlotsByMonth(year, month, serviceId) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    
+    return fetch(`${URL}/services/slots-by-month`, {
+      method: 'GET',
+      body: JSON.stringify({year, month, serviceId}),
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      }
+    });
+  }
+
 } 

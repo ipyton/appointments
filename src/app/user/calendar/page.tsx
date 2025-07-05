@@ -112,7 +112,7 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<Booking | null>(null);
   const [view, setView] = useState<"dayGridMonth" | "timeGridWeek" | "timeGridDay">("dayGridMonth");
   const [isClient, setIsClient] = useState(false);
-  const calendarRef = useRef(null);
+  const calendarRef = useRef<any>(null);
   
   useEffect(() => {
     setIsClient(true);
@@ -124,6 +124,14 @@ export default function CalendarPage() {
     
     return () => clearTimeout(timer);
   }, []);
+  
+  // Update calendar view when view state changes
+  useEffect(() => {
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.changeView(view);
+    }
+  }, [view]);
   
   // Convert bookings to FullCalendar events
   useEffect(() => {

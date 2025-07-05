@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Clock, MapPin, MessageCircle, X } from "lucide-react";
+import Service from "@/apis/Service";
 
 // Define TypeScript interfaces
 interface Slot {
@@ -43,7 +44,7 @@ const MOCK_EVENTS: Event[] = [
     longDescription: "Our dental checkup includes a comprehensive examination of your teeth and gums, professional cleaning to remove plaque and tartar, and recommendations for maintaining optimal oral health. Our experienced dentists use modern equipment to ensure your comfort throughout the procedure.",
     duration: 30,
     price: 75,
-    image: "https://placehold.co/600x400?text=Dental+Checkup",
+    image: "https://placebear.com/800/600",
     location: "123 Health Street, Medical Center",
     allowMultipleBookings: false, // Single choice
     availableSlots: [
@@ -67,7 +68,7 @@ const MOCK_EVENTS: Event[] = [
     longDescription: "Our comprehensive fitness training package allows you to book multiple sessions with our certified personal trainers. Design your own schedule and work towards your fitness goals with flexible booking options.",
     duration: 60,
     price: 80,
-    image: "https://placehold.co/600x400?text=Fitness+Training",
+    image: "https://placebear.com/801/600",
     location: "456 Fitness Street, Gym Center",
     allowMultipleBookings: true, // Multiple choice
     availableSlots: [
@@ -92,6 +93,23 @@ export default function EventDetailPage() {
     { id: 1, sender: 'consultant', text: `Hello! I'm here to help you with your ${event.title.toLowerCase()} booking. How can I assist you today?`, timestamp: new Date() }
   ]);
   const [newMessage, setNewMessage] = useState<string>('');
+
+  useEffect(() => {
+    const fetchSlots = async () => {
+      // const response = await Service.getSlotsByDate(new Date().toISOString().split('T')[0], event.id);
+      // console.log(response);
+      const data = await Service.getServicesByPage(1);
+      console.log(data);
+
+      const data2 = await Service.getSlotsByDate(new Date().toISOString().split('T')[0], event.id);
+      console.log(data2);
+
+      const data3 = await Service.getSlotsByMonth(new Date().getFullYear(), new Date().getMonth(), event.id);
+      console.log(data3);
+    };
+    fetchSlots();
+  }, []);
+
 
   // Get available dates for the event
   const availableDates = [...new Set(event.availableSlots.map(slot => slot.date))];

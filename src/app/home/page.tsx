@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -19,14 +19,7 @@ export default function HomePage() {
       <header className="bg-white shadow p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center">
-            <Image
-              className="dark:invert"
-              src="/next.svg"
-              alt="Appointments Logo"
-              width={120}
-              height={30}
-              priority
-            />
+            <span className="text-xl font-bold text-blue-600">AppointEase</span>
           </div>
           <div className="flex items-center space-x-4">
             {user ? (
@@ -169,13 +162,7 @@ export default function HomePage() {
       <footer className="bg-gray-100 p-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
-            <Image
-              className="dark:invert"
-              src="/next.svg"
-              alt="Appointments Logo"
-              width={100}
-              height={24}
-            />
+            <span className="text-lg font-bold text-blue-600">AppointEase</span>
           </div>
           <div className="flex gap-8">
             <a href="#" className="text-gray-600 hover:text-gray-900">About</a>
@@ -184,7 +171,7 @@ export default function HomePage() {
             <a href="#" className="text-gray-600 hover:text-gray-900">Contact</a>
           </div>
           <div className="text-gray-600">
-            © {new Date().getFullYear()} Appointments
+            © {new Date().getFullYear()} AppointEase
           </div>
         </div>
       </footer>

@@ -1,6 +1,6 @@
-# Appointments Scheduling Application
+# AppointEase - Appointment Scheduling Application
 
-A Next.js application for appointment scheduling and management.
+An appointment scheduling and management system built with Next.js.
 
 ## Features
 
