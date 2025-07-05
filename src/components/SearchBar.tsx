@@ -17,6 +17,7 @@ interface SearchSuggestion {
 interface SearchBarProps {
   placeholder?: string;
   className?: string;
+  initialQuery?: string;
 }
 
 // Debounce function to limit how often a function can be called
@@ -36,16 +37,25 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-export default function SearchBar({ placeholder = "Search...", className = "" }: SearchBarProps) {
+export default function SearchBar({ placeholder = "Search...", className = "", initialQuery = "" }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
   const router = useRouter();
   
   // Debounce the search query to avoid excessive API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Update searchQuery when initialQuery changes, but only on initial mount
+  useEffect(() => {
+    if (initialQuery && !initializedRef.current) {
+      setSearchQuery(initialQuery);
+      initializedRef.current = true;
+    }
+  }, [initialQuery]);
 
   // Handle clicks outside the search component to close suggestions
   useEffect(() => {
@@ -84,17 +94,46 @@ export default function SearchBar({ placeholder = "Search...", className = "" }:
     }
   }, [debouncedSearchQuery]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      // Navigate to the search page with the query parameter
+      const searchUrl = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+      
+      // Check if we're already on the search page with the same query
+      const currentPath = window.location.pathname;
+      const currentSearch = window.location.search;
+      const currentUrl = currentPath + currentSearch;
+      
+      if (currentPath === '/search' && currentUrl.includes(`q=${encodeURIComponent(searchQuery.trim())}`)) {
+        // If searching the same term, force a page refresh
+        window.location.href = searchUrl;
+      } else {
+        // Normal navigation for different searches
+        router.push(searchUrl);
+      }
       setShowSuggestions(false);
     }
   };
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
     setSearchQuery(suggestion.name);
-    router.push(`/search?q=${encodeURIComponent(suggestion.name)}&type=${suggestion.type}&id=${suggestion.id}`);
+    const searchUrl = `/search?q=${encodeURIComponent(suggestion.name)}&type=${suggestion.type}&id=${suggestion.id}`;
+    
+    // Check if we're already on the search page with the same query
+    const currentPath = window.location.pathname;
+    const currentSearch = window.location.search;
+    const currentUrl = currentPath + currentSearch;
+    
+    if (currentPath === '/search' && 
+        currentUrl.includes(`q=${encodeURIComponent(suggestion.name)}`) && 
+        currentUrl.includes(`type=${suggestion.type}`)) {
+      // If navigating to the same search, force a page refresh
+      window.location.href = searchUrl;
+    } else {
+      // Normal navigation for different searches
+      router.push(searchUrl);
+    }
     setShowSuggestions(false);
   };
 

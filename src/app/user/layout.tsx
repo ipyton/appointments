@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,6 +15,7 @@ export default function UserLayout({
 }>) {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -22,7 +23,6 @@ export default function UserLayout({
     if (!user) {
       router.push("/login");
     } else if (user.role !== "User") {
-      
       router.push("/home");
     }
   }, [user, router]);
@@ -42,6 +42,11 @@ export default function UserLayout({
     { href: "/user/bookings", label: "My Bookings", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
     { href: "/user/chat", label: "Chat", icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" },
   ];
+
+  // Function to determine if a nav item is active
+  const isNavItemActive = (href: string): boolean => {
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -139,24 +144,33 @@ export default function UserLayout({
               <h3 className="text-lg font-medium text-white">Navigation</h3>
             </div>
             <nav className="px-3 py-4 space-y-1">
-              {navItems.map((item) => (
-                <Link 
-                  key={item.href}
-                  href={item.href} 
-                  className="group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                >
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="mr-3 h-5 w-5 text-gray-500 group-hover:text-blue-600" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
+              {navItems.map((item) => {
+                const isActive = isNavItemActive(item.href);
+                return (
+                  <Link 
+                    key={item.href}
+                    href={item.href} 
+                    className={`group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
+                      isActive 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'hover:bg-blue-50 hover:text-blue-700'
+                    }`}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                  </svg>
-                  {item.label}
-                </Link>
-              ))}
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className={`mr-3 h-5 w-5 ${
+                        isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-blue-600'
+                      }`} 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                    </svg>
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
         </aside>

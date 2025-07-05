@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, Fragment, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -32,12 +32,9 @@ export default function ProviderLayout({
 }>) {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const [currentPath, setCurrentPath] = useState("");
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Set current path for navigation highlighting
-    setCurrentPath(window.location.pathname);
-    
     // Redirect if not logged in or not a provider
     if (!user) {
       router.push("/login");
@@ -65,6 +62,11 @@ export default function ProviderLayout({
     { name: 'Finance', href: '/provider/finance', icon: CurrencyDollarIcon },
   ];
 
+  // Check if the path is active
+  const isActive = (path: string) => {
+    return pathname === path || pathname.startsWith(`${path}/`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Disclosure as="nav" className="bg-white shadow-sm">
@@ -86,15 +88,15 @@ export default function ProviderLayout({
                     </Link>
                   </div>
                   <div className="ml-6 hidden md:flex items-center">
-                    <SearchBar 
-                      placeholder="Search appointments, clients..." 
+                    <SearchBar
+                      placeholder="Search appointments, clients..."
                       className="w-64"
                     />
                   </div>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:items-center">
                   <span className="text-gray-600 mr-4">Welcome, {user.fullName}</span>
-                  
+
                   {/* Profile dropdown */}
                   <Menu as="div" className="relative ml-3">
                     <div>
@@ -163,21 +165,23 @@ export default function ProviderLayout({
 
             <Disclosure.Panel className="sm:hidden">
               <div className="space-y-1 pb-3 pt-2">
-                {navigation.map((item) => (
-                  <Disclosure.Button
-                    key={item.name}
-                    as="a"
-                    href={item.href}
-                    className={classNames(
-                      currentPath === item.href
-                        ? 'bg-blue-50 border-blue-500 text-blue-700'
-                        : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800',
-                      'block border-l-4 py-2 pl-3 pr-4 text-base font-medium'
-                    )}
-                  >
-                    {item.name}
-                  </Disclosure.Button>
-                ))}
+                {navigation.map((item) => {
+                  return (
+                    <Disclosure.Button
+                      key={item.name}
+                      as="a"
+                      href={item.href}
+                      className={classNames(
+                        isActive(item.href)
+                          ? 'bg-blue-50 border-blue-500 text-blue-700'
+                          : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800',
+                        'block border-l-4 py-2 pl-3 pr-4 text-base font-medium'
+                      )}
+                    >
+                      {item.name}
+                    </Disclosure.Button>
+                  );
+                })}
               </div>
               <div className="border-t border-gray-200 pb-3 pt-4">
                 <div className="flex items-center px-4">
@@ -187,7 +191,7 @@ export default function ProviderLayout({
                     </div>
                   </div>
                   <div className="ml-3">
-                                                  <div className="text-base font-medium text-gray-800">{user.fullName}</div>
+                    <div className="text-base font-medium text-gray-800">{user.fullName}</div>
                     <div className="text-sm font-medium text-gray-500">{user.email}</div>
                   </div>
                 </div>
@@ -217,27 +221,29 @@ export default function ProviderLayout({
         <div className="flex flex-col md:flex-row">
           <div className="hidden md:block w-64 pt-6">
             <nav className="space-y-1" aria-label="Sidebar">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={classNames(
-                    currentPath === item.href
-                      ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                    'group flex items-center px-3 py-2 text-sm font-medium rounded-md'
-                  )}
-                >
-                  <item.icon
+              {navigation.map((item) => {
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
                     className={classNames(
-                      currentPath === item.href ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500',
-                      'mr-3 flex-shrink-0 h-6 w-6'
+                      isActive(item.href)
+                        ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                      'group flex items-center px-3 py-2 text-sm font-medium rounded-md'
                     )}
-                    aria-hidden="true"
-                  />
-                  <span className="truncate">{item.name}</span>
-                </Link>
-              ))}
+                  >
+                    <item.icon
+                      className={classNames(
+                        isActive(item.href) ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500',
+                        'mr-3 flex-shrink-0 h-6 w-6'
+                      )}
+                      aria-hidden="true"
+                    />
+                    <span className="truncate">{item.name}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 

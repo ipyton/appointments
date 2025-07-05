@@ -48,6 +48,8 @@ export default function ProviderEventsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [editDescription, setEditDescription] = useState("");
 
   // Fetch events when component mounts
   useEffect(() => {
@@ -65,8 +67,16 @@ export default function ProviderEventsPage() {
       }
       
       const data = await response.json();
-      // Ensure data is an array before setting it to state
-      setEvents(Array.isArray(data) ? data : []);
+      
+      // Transform the data to match the Event interface
+      const transformedData = Array.isArray(data) 
+        ? data.map(item => ({
+            ...item.service,
+            // Map any additional fields if needed
+          }))
+        : [];
+      
+      setEvents(transformedData);
       setError(null);
     } catch (err) {
       console.error('Error fetching events:', err);
@@ -128,7 +138,7 @@ export default function ProviderEventsPage() {
 
   // Count total available arrangements for an event
   const countAvailableArrangements = (event: Event) => {
-    return event.arrangements ? event.arrangements.length : 0;
+    return event?.arrangements ? event.arrangements.length : 0;
   };
 
   // Format date
@@ -171,7 +181,47 @@ export default function ProviderEventsPage() {
     }
   };
 
-
+  // Handle edit description submission
+  const handleEditSubmit = async (eventId: number) => {
+    try {
+      const event = events.find(e => e.id === eventId);
+      if (!event) return;
+      
+      // Update only the description via API
+      const response = await Service.updateEvent(eventId.toString(), { 
+        ...event, 
+        description: editDescription 
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update event description');
+      }
+      
+      // Update local state
+      setEvents(events.map(event => 
+        event.id === eventId ? { ...event, description: editDescription } : event
+      ));
+      
+      // Reset editing state
+      setEditingEventId(null);
+      setEditDescription("");
+    } catch (err) {
+      console.error('Error updating event description:', err);
+      alert('Failed to update event description');
+    }
+  };
+  
+  // Start editing an event
+  const startEditing = (event: Event) => {
+    setEditingEventId(event.id);
+    setEditDescription(event.description);
+  };
+  
+  // Cancel editing
+  const cancelEditing = () => {
+    setEditingEventId(null);
+    setEditDescription("");
+  };
 
   return (
     <motion.div 
@@ -301,12 +351,37 @@ export default function ProviderEventsPage() {
                   </span>
                 </div>
                 
-                <p className="mt-2 text-gray-600">{event.description}</p>
+                {editingEventId === event.id ? (
+                  <div className="mt-2">
+                    <textarea
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      rows={4}
+                    />
+                    <div className="mt-2 flex space-x-2">
+                      <button
+                        onClick={() => handleEditSubmit(event.id)}
+                        className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelEditing}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-gray-600">{event.description}</p>
+                )}
                 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
                     <CurrencyDollarIcon className="h-3 w-3 mr-1" />
-                    ${event.price.toFixed(2)}
+                    ${event.price ? event.price.toFixed(2) : '0.00'}
                   </span>
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
                     <UserGroupIcon className="h-3 w-3 mr-1" />
@@ -326,7 +401,7 @@ export default function ProviderEventsPage() {
                     Available Arrangements
                   </h4>
                   <div className="space-y-2">
-                    {event.arrangements.slice(0, 3).map((arrangement, index) => (
+                    {(event.arrangements || []).slice(0, 3).map((arrangement, index) => (
                       <div key={index} className="bg-gray-50 rounded-lg p-2">
                         <div className="flex items-center">
                           <TagIcon className="h-4 w-4 text-gray-500 mr-2" />
@@ -342,9 +417,9 @@ export default function ProviderEventsPage() {
                         </div>
                       </div>
                     ))}
-                    {event.arrangements.length > 3 && (
+                    {(event.arrangements || []).length > 3 && (
                       <div className="text-xs text-blue-600 font-medium ml-6">
-                        +{event.arrangements.length - 3} more arrangements available
+                        +{(event.arrangements || []).length - 3} more arrangements available
                       </div>
                     )}
                   </div>
@@ -376,13 +451,13 @@ export default function ProviderEventsPage() {
                         </>
                       )}
                     </button>
-                    <Link
-                      href={`/provider/events/edit/${event.id}`}
+                    <button
+                      onClick={() => startEditing(event)}
                       className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 text-xs font-medium"
                     >
                       <PencilIcon className="h-3 w-3 mr-1" />
-                      Edit
-                    </Link>
+                      Edit Description
+                    </button>
                     {confirmDelete === event.id ? (
                       <div className="flex items-center space-x-1">
                         <button 
@@ -466,7 +541,7 @@ export default function ProviderEventsPage() {
             <div>
               <p className="text-sm text-gray-500">Avg. Price</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${Array.isArray(events) && events.length > 0 ? (events.reduce((total, event) => total + event.price, 0) / events.length).toFixed(2) : "0.00"}
+                ${Array.isArray(events) && events.length > 0 ? (events.reduce((total, event) => total + (event.price || 0), 0) / events.length).toFixed(2) : "0.00"}
               </p>
             </div>
           </div>
