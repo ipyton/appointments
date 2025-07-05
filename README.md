@@ -1,4 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Appointments Scheduling Application
+
+A Next.js application for appointment scheduling and management.
+
+## Features
+
+- Provider dashboard to manage appointments and services
+- User interface for booking and managing appointments
+- Calendar integration for scheduling
+- Chat functionality between providers and users
+- Payment processing
+
+## FullCalendar Integration
+
+The application uses FullCalendar.js to provide advanced calendar functionality in both provider and user interfaces.
+
+### Calendar Features:
+
+- Multiple views (month, week, day)
+- Event management with drag-and-drop functionality
+- Custom event styling based on appointment status
+- Template system for quick availability scheduling (provider only)
+- Interactive event display
+
+### Example Usage
+
+#### Provider Calendar:
+
+The provider calendar at `/provider/calendar` allows service providers to:
+
+- View and manage appointments
+- Apply availability templates to multiple days
+- Select specific time slots for availability
+- Drag and drop availability slots
+
+#### User Calendar:
+
+The user calendar at `/user/calendar` allows users to:
+
+- View booked appointments
+- Switch between month, week, and day views
+- See appointment details with provider information
+- Manage bookings (cancel/reschedule)
+
+## Setup and Development
+
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Run the development server:
+
+```bash
+npm run dev
+```
+
+4. Open [http://localhost:3001](http://localhost:3001) in your browser
+
+## Technologies
+
+- Next.js 15.3.4
+- React 19
+- TailwindCSS 4
+- FullCalendar.js
+- TypeScript
 
 ## Getting Started
 

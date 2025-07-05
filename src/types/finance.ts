@@ -24,6 +24,16 @@ export interface MonthlyRevenue {
   amount: number;
 }
 
+export interface WeeklyRevenue {
+  week: string;
+  amount: number;
+}
+
+export interface DailyRevenue {
+  day: string;
+  amount: number;
+}
+
 export interface FinancialData {
   totalRevenue: number;
   pendingPayments: number;
@@ -33,6 +43,8 @@ export interface FinancialData {
   topServices: ServiceRevenue[];
   recentTransactions: Transaction[];
   monthlyRevenue: MonthlyRevenue[];
+  weeklyRevenue?: WeeklyRevenue[];
+  dailyRevenue?: DailyRevenue[];
 }
 
 export interface FinancialFilter {

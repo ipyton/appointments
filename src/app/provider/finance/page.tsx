@@ -14,6 +14,7 @@ import {
   ArrowPathIcon
 } from "@heroicons/react/24/outline";
 import { FinancialData, TransactionStatus } from "@/types/finance";
+import RevenueChart from "@/components/finance/RevenueChart";
 
 export default function ProviderFinancePage() {
   const [dateRange, setDateRange] = useState("monthly");
@@ -50,6 +51,23 @@ export default function ProviderFinancePage() {
       { month: "Aug", amount: 3200 },
       { month: "Sep", amount: 3800 },
       { month: "Oct", amount: 4250 },
+      { month: "Nov", amount: 4500 },
+      { month: "Dec", amount: 4800 },
+    ],
+    weeklyRevenue: [
+      { week: "Week 1", amount: 950 },
+      { week: "Week 2", amount: 1050 },
+      { week: "Week 3", amount: 1250 },
+      { week: "Week 4", amount: 1000 },
+    ],
+    dailyRevenue: [
+      { day: "Mon", amount: 180 },
+      { day: "Tue", amount: 220 },
+      { day: "Wed", amount: 280 },
+      { day: "Thu", amount: 260 },
+      { day: "Fri", amount: 310 },
+      { day: "Sat", amount: 240 },
+      { day: "Sun", amount: 160 },
     ]
   };
 
@@ -100,6 +118,7 @@ export default function ProviderFinancePage() {
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
             >
+              <option value="daily">Today</option>
               <option value="weekly">This Week</option>
               <option value="monthly">This Month</option>
               <option value="quarterly">This Quarter</option>
@@ -170,22 +189,14 @@ export default function ProviderFinancePage() {
       </motion.div>
 
       {/* Revenue Chart */}
-      <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-5">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Revenue Trend</h2>
-        <div className="h-64 flex items-end space-x-2">
-          {financialData.monthlyRevenue.map((item, index) => {
-            const height = (item.amount / 5000) * 100; // Scale to percentage of max height
-            return (
-              <div key={index} className="flex flex-col items-center flex-1">
-                <div 
-                  className="w-full bg-blue-500 rounded-t-md transition-all duration-500 ease-in-out hover:bg-blue-600"
-                  style={{ height: `${height}%` }}
-                ></div>
-                <div className="text-xs text-gray-500 mt-1">{item.month}</div>
-              </div>
-            );
-          })}
-        </div>
+      <motion.div variants={itemVariants}>
+        <RevenueChart 
+          monthlyRevenue={financialData.monthlyRevenue}
+          weeklyRevenue={financialData.weeklyRevenue}
+          dailyRevenue={financialData.dailyRevenue}
+          dateRange={dateRange}
+          onDateRangeChange={(range) => setDateRange(range)}
+        />
       </motion.div>
 
       {/* Top Services and Recent Transactions */}
