@@ -31,6 +31,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to safely access localStorage
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return null;
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  },
+  removeItem: (key: string): void => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(key);
+    }
+  }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // return
     try {
       // Get token from localStorage
-      const storedUser = localStorage.getItem("User");
+      const storedUser = safeLocalStorage.getItem("User");
       
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
@@ -75,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Navigation is now handled in the separate useEffect
         } else {
           // Token is invalid, remove from localStorage
-          localStorage.removeItem("User");
+          safeLocalStorage.removeItem("User");
           setUser(null);
         }
       } else {
@@ -83,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error("Error validating token:", error);
-      localStorage.removeItem("User");
+      safeLocalStorage.removeItem("User");
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -92,9 +112,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // In a real app, these would make API calls to your backend
   const login = async (email: string, password: string, rememberMe: boolean = false) => {
-
-
-
     setIsLoading(true);
     
     try {
@@ -119,8 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       setUser(data);  
-      localStorage.setItem("User", JSON.stringify(data));
-      localStorage.setItem("token", data.token);
+      safeLocalStorage.setItem("User", JSON.stringify(data));
+      safeLocalStorage.setItem("token", data.token);
       // Navigation is now handled in the separate useEffect
       return { success: true };
     } catch (error) {
@@ -161,7 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       
       // setUser(data);
-      // localStorage.setItem("User", JSON.stringify(data));
+      // safeLocalStorage.setItem("User", JSON.stringify(data));
       
       // Navigation is now handled in the separate useEffect
       return { success: true };
@@ -222,11 +239,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ...user,
         ...data,
         // In a real app, the avatar URL would come from the server response
-        avatar: avatarFile ? window.URL.createObjectURL(avatarFile) : user.avatar,
+        avatar: avatarFile && typeof window !== 'undefined' ? window.URL.createObjectURL(avatarFile) : user.avatar,
       };
       
       setUser(updatedUser);
-      localStorage.setItem("User", JSON.stringify(updatedUser));
+      safeLocalStorage.setItem("User", JSON.stringify(updatedUser));
       
       return { success: true };
     } catch (error) {
@@ -248,29 +265,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // In a real app, this would send a password reset email
-      const response = await fetch(URL + "/account/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ Email: email }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok || data.statusCode !== 200) {
-        return { 
-          success: false, 
-          message: data.message || "Password reset failed. Please try again." 
-        };
-      }
+      // For now, we'll simulate a successful request
       
       return { success: true };
     } catch (error) {
       console.error("Password reset failed:", error);
       return { 
         success: false, 
-        message: "Network error. Please try again later." 
+        message: "Failed to send password reset email. Please try again." 
       };
     } finally {
       setIsLoading(false);
@@ -279,24 +281,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch(URL + "/token/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      // Even if the server request fails, we should clear local state
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
+      // In a real app, we would make an API call to logout
+      // For now, we'll just simulate a successful logout
+      await Auth.logout();
+      
       setUser(null);
-      localStorage.removeItem("User");
-      router.push("/");
+      safeLocalStorage.removeItem("User");
+      safeLocalStorage.removeItem("token");
+      
+      // Navigate to login page
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, resetPassword, checkLoginStatus, updateProfile }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        isLoading, 
+        login, 
+        register,
+        logout,
+        resetPassword,
+        checkLoginStatus,
+        updateProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

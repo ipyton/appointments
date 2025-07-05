@@ -2,11 +2,13 @@ name = "appointments"
 compatibility_date = "2025-03-25"
 compatibility_flags = ["nodejs_compat"]
 
+# Development configuration
 [[services]]
 binding = "NEXT_ORIGIN"
 service = "appointments-server"
 
+# Production configuration
 [env.production]
 services = [
-  { binding = "NEXT_ORIGIN", service = "appointments-server" }
+  { binding = "NEXT_ORIGIN", service = "appointments-production-server" }
 ]
