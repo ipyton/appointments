@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Calendar from "@/apis/Calendar";
 
 // FullCalendar imports
 import FullCalendar from '@fullcalendar/react';
@@ -116,14 +117,42 @@ export default function CalendarPage() {
   
   useEffect(() => {
     setIsClient(true);
-    // Simulating API fetch with timeout
-    const timer = setTimeout(() => {
-      setBookings(MOCK_BOOKINGS);
-      setLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    fetchCalendarData(currentDate, view);
   }, []);
+  
+  // Fetch calendar data from API
+  const fetchCalendarData = async (date: Date, calendarView: string) => {
+    try {
+      setLoading(true);
+      
+      // Convert view type to match backend requirements
+      let type = "month";
+      if (calendarView === "timeGridWeek") type = "week";
+      if (calendarView === "timeGridDay") type = "day";
+      
+      // For month view, use the first day of the current month
+      let requestDate = new Date(date);
+      if (type === "month") {
+        requestDate = new Date(date.getFullYear(), date.getMonth(), 1);
+      }
+      
+      const response = await Calendar.getCalendar(requestDate, type);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Calendar data fetched:", data);
+        // For now, we'll still use mock data until you provide the return format
+        setBookings(MOCK_BOOKINGS);
+      } else {
+        console.error("Failed to fetch calendar data:", await response.text());
+        setBookings(MOCK_BOOKINGS); // Fallback to mock data
+      }
+    } catch (error) {
+      console.error("Error fetching calendar data:", error);
+      setBookings(MOCK_BOOKINGS); // Fallback to mock data
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Update calendar view when view state changes
   useEffect(() => {
@@ -247,8 +276,15 @@ export default function CalendarPage() {
             </div>
           ) : (
             <div className="h-[800px]">
-              <FullCalendar
+                              <FullCalendar
                 ref={calendarRef}
+                datesSet={(dateInfo) => {
+                  const newDate = dateInfo.start;
+                  const newView = dateInfo.view.type;
+                  setCurrentDate(newDate);
+                  setView(newView as "dayGridMonth" | "timeGridWeek" | "timeGridDay");
+                  fetchCalendarData(newDate, newView);
+                }}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView={view}
                 headerToolbar={{

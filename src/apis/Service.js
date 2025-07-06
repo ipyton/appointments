@@ -88,9 +88,8 @@ export default class Service {
   static async getSlotsByDate(date, serviceId) {
     const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
     
-    return fetch(`${URL}/services/slots-by-date`, {
+    return fetch(`${URL}/services/slots-by-date?date=${date}&serviceId=${serviceId}`, {
       method: 'GET',
-      body: JSON.stringify({date, serviceId}),
       headers: {
         ...(token && { 'Authorization': `Bearer ${token}` })
       }
@@ -100,9 +99,8 @@ export default class Service {
   static async getSlotsByMonth(year, month, serviceId) {
     const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
     
-    return fetch(`${URL}/services/slots-by-month`, {
+    return fetch(`${URL}/services/slots-by-month?year=${year}&month=${month}&serviceId=${serviceId}`, {
       method: 'GET',
-      body: JSON.stringify({year, month, serviceId}),
       headers: {
         ...(token && { 'Authorization': `Bearer ${token}` })
       }

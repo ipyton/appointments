@@ -1,29 +1,48 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Clock, MapPin, MessageCircle, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MapPin, MessageCircle, X, Users, Check } from "lucide-react";
 import Service from "@/apis/Service";
+import Appointment from "@/apis/Appointment";
+import { useRouter, useParams } from "next/navigation";
 
 // Define TypeScript interfaces
 interface Slot {
   id: string;
   date: string;
   time: string;
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+  maxConcurrentAppointments: number;
+  currentAppointmentCount: number;
 }
 
-interface Event {
-  id: string;
-  title: string;
-  provider: string;
-  category: string;
+interface ServiceData {
+  id: number;
+  name: string;
+  enabled: boolean;
   description: string;
-  longDescription: string;
-  duration: number;
   price: number;
-  image: string;
-  location: string;
+  providerId: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string | null;
   allowMultipleBookings: boolean;
-  availableSlots: Slot[];
+  arrangements: any | null;
+}
+
+interface ProviderData {
+  id: string;
+  fullName: string;
+  businessName: string;
+  email: string;
+  phoneNumber: string | null;
+}
+
+interface EventData {
+  service: ServiceData;
+  provider: ProviderData;
 }
 
 interface ChatMessage {
@@ -33,91 +52,79 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-// Mock event data with allowMultipleBookings attribute
-const MOCK_EVENTS: Event[] = [
-  {
-    id: "1",
-    title: "Dental Checkup",
-    provider: "Dr. Smith",
-    category: "Healthcare",
-    description: "Regular dental checkup and cleaning.",
-    longDescription: "Our dental checkup includes a comprehensive examination of your teeth and gums, professional cleaning to remove plaque and tartar, and recommendations for maintaining optimal oral health. Our experienced dentists use modern equipment to ensure your comfort throughout the procedure.",
-    duration: 30,
-    price: 75,
-    image: "https://placebear.com/800/600",
-    location: "123 Health Street, Medical Center",
-    allowMultipleBookings: false, // Single choice
-    availableSlots: [
-      { id: "1-1", date: "2025-07-15", time: "09:00 AM" },
-      { id: "1-2", date: "2025-07-15", time: "10:00 AM" },
-      { id: "1-3", date: "2025-07-15", time: "11:00 AM" },
-      { id: "1-4", date: "2025-07-16", time: "09:00 AM" },
-      { id: "1-5", date: "2025-07-16", time: "10:00 AM" },
-      { id: "1-6", date: "2025-07-17", time: "14:00 PM" },
-      { id: "1-7", date: "2025-07-17", time: "15:00 PM" },
-      { id: "1-8", date: "2025-07-18", time: "09:00 AM" },
-      { id: "1-9", date: "2025-07-20", time: "10:00 AM" },
-    ]
-  },
-  {
-    id: "2",
-    title: "Fitness Training Package",
-    provider: "FitLife Gym",
-    category: "Fitness",
-    description: "Personal training sessions package.",
-    longDescription: "Our comprehensive fitness training package allows you to book multiple sessions with our certified personal trainers. Design your own schedule and work towards your fitness goals with flexible booking options.",
-    duration: 60,
-    price: 80,
-    image: "https://placebear.com/801/600",
-    location: "456 Fitness Street, Gym Center",
-    allowMultipleBookings: true, // Multiple choice
-    availableSlots: [
-      { id: "2-1", date: "2025-07-15", time: "09:00 AM" },
-      { id: "2-2", date: "2025-07-15", time: "10:00 AM" },
-      { id: "2-3", date: "2025-07-16", time: "14:00 PM" },
-      { id: "2-4", date: "2025-07-16", time: "15:00 PM" },
-      { id: "2-5", date: "2025-07-17", time: "16:00 PM" },
-      { id: "2-6", date: "2025-07-18", time: "09:00 AM" },
-      { id: "2-7", date: "2025-07-20", time: "10:00 AM" },
-    ]
-  }
-];
-
 export default function EventDetailPage() {
-  const [event, setEvent] = useState<Event>(MOCK_EVENTS[0]); // Default to first event for demo
+  const router = useRouter();
+  const params = useParams();
+  const eventId = params.id as string;
+  
+  const [eventData, setEventData] = useState<EventData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { id: 1, sender: 'consultant', text: `Hello! I'm here to help you with your ${event.title.toLowerCase()} booking. How can I assist you today?`, timestamp: new Date() }
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
+  const [availableDays, setAvailableDays] = useState<Record<number, number>>({});
+  const [bookingNotes, setBookingNotes] = useState<string>('');
+
   const [newMessage, setNewMessage] = useState<string>('');
 
   useEffect(() => {
-    const fetchSlots = async () => {
-      // const response = await Service.getSlotsByDate(new Date().toISOString().split('T')[0], event.id);
-      // console.log(response);
-      const data = await Service.getServicesByPage(1);
-      console.log(data);
-
-      const data2 = await Service.getSlotsByDate(new Date().toISOString().split('T')[0], event.id);
-      console.log(data2);
-
-      const data3 = await Service.getSlotsByMonth(new Date().getFullYear(), new Date().getMonth(), event.id);
-      console.log(data3);
+    const fetchEventData = async () => {
+      try {
+        const response = await Service.getEventById(eventId);
+        const data = await response.json();
+        console.log("Event:", data);
+        setEventData(data);
+        
+        // Initialize chat with welcome message
+        setChatMessages([
+          { 
+            id: 1, 
+            sender: 'consultant', 
+            text: `Hello! I'm here to help you with your ${data.service.name.toLowerCase()} booking. How can I assist you today?`, 
+            timestamp: new Date() 
+          }
+        ]);
+        
+        // Fetch slots by month to show available days on calendar
+        try {
+          // Add 1 to month value since backend expects 1-12 range, not JavaScript's 0-11 range
+          const slotsResponse = await Service.getSlotsByMonth(new Date().getFullYear(), new Date().getMonth() + 1, eventId);
+          const slotsData = await slotsResponse.json();
+          console.log("Slots by month:", slotsData);
+          setAvailableDays(slotsData);
+        } catch (error) {
+          console.error("Error fetching slots:", error);
+        }
+      } catch (error) {
+        console.error("Error fetching event data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchSlots();
-  }, []);
+    
+    fetchEventData();
+  }, [eventId]);
 
+  // Show loading state while fetching event
+  if (loading || !eventData) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl">Loading event details...</div>
+      </div>
+    );
+  }
+
+  const { service, provider } = eventData;
 
   // Get available dates for the event
-  const availableDates = [...new Set(event.availableSlots.map(slot => slot.date))];
+  const availableDates = [...new Set(availableSlots.map(slot => slot.date))];
 
-  // Get slots for selected date
-  const getSlotsForDate = (date: string) => {
-    if (!date) return [];
-    return event.availableSlots.filter(slot => slot.date === date);
+  // Check if a specific day in the current month is available
+  const isDayAvailable = (day: number) => {
+    return availableDays[day] > 0;
   };
 
   // Calendar helper functions
@@ -134,16 +141,69 @@ export default function EventDetailPage() {
   };
 
   const isDateAvailable = (dateStr: string) => {
+    // For the current month, use the availableDays data
+    const date = new Date(dateStr);
+    if (date.getMonth() === currentMonth.getMonth() && 
+        date.getFullYear() === currentMonth.getFullYear()) {
+      return isDayAvailable(date.getDate());
+    }
+    // For other months, fall back to the previous implementation
     return availableDates.includes(dateStr);
   };
 
-  const handleDateSelect = (dateStr: string) => {
+  const handleDateSelect = async (dateStr: string) => {
     setSelectedDate(dateStr);
     setSelectedSlots([]); // Reset selected slots when date changes
+    
+    try {
+      // Fetch slots for the selected date
+      const slotsResponse = await Service.getSlotsByDate(dateStr, eventId);
+      const slotsData = await slotsResponse.json();
+      console.log("Slots for selected date:", slotsData);
+      
+      if (Array.isArray(slotsData)) {
+        // Transform the API response to match our Slot interface
+        const formattedSlots = slotsData.map(slot => {
+          // Parse the start and end times
+          const startTime = slot.startTime.includes('T') 
+            ? new Date(slot.startTime) 
+            : new Date(`${slot.date}T${slot.startTime}`);
+            
+          const endTime = slot.endTime.includes('T') 
+            ? new Date(slot.endTime) 
+            : new Date(`${slot.date}T${slot.endTime}`);
+          
+          // Format the times for display
+          const formattedStartTime = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const formattedEndTime = endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          return {
+            id: slot.id.toString(),
+            date: dateStr,
+            time: `${formattedStartTime} - ${formattedEndTime}`,
+            isAvailable: slot.isAvailable,
+            startTime: formattedStartTime,
+            endTime: formattedEndTime,
+            maxConcurrentAppointments: slot.maxConcurrentAppointments,
+            currentAppointmentCount: slot.currentAppointmentCount
+          };
+        });
+        
+        // Filter out any unavailable slots
+        const availableSlots = formattedSlots.filter(slot => slot.isAvailable);
+        setAvailableSlots(availableSlots);
+      } else {
+        console.error("Unexpected slots data format:", slotsData);
+        setAvailableSlots([]);
+      }
+    } catch (error) {
+      console.error("Error fetching slots for date:", error);
+      setAvailableSlots([]);
+    }
   };
 
   const handleSlotSelect = (slotId: string) => {
-    if (event.allowMultipleBookings) {
+    if (service.allowMultipleBookings) {
       // Multiple selection
       setSelectedSlots(prev => 
         prev.includes(slotId) 
@@ -156,19 +216,49 @@ export default function EventDetailPage() {
     }
   };
 
-  const handleBookNow = () => {
+  const handleBookNow = async () => {
     if (selectedSlots.length === 0) {
       alert("Please select at least one time slot");
       return;
     }
     
-    const selectedSlotDetails = event.availableSlots.filter(slot => 
+    const selectedSlotDetails = availableSlots.filter(slot => 
       selectedSlots.includes(slot.id)
     );
     
-    alert(`Booking confirmed for:\n${selectedSlotDetails.map(slot => 
-      `${slot.date} at ${slot.time}`
-    ).join('\n')}`);
+    try {
+      // Get the first selected slot
+      const selectedSlot = selectedSlotDetails[0];
+      const startTimeDate = new Date(`${selectedDate}T${selectedSlot.startTime}`);
+      
+      // Format as ISO string for the API
+      const startTime = startTimeDate.toISOString();
+      
+      // Call the bookAppointment API with all required parameters
+      const response = await Appointment.bookAppointment(
+        service.id,
+        startTime,
+        null,  // templateId
+        selectedSlot.id,  // slotId
+        null,  // dayId
+        null,  // segmentId
+        bookingNotes || ""  // notes
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to book appointment");
+      }
+      
+      const bookingData = await response.json();
+      console.log("Booking successful:", bookingData);
+      
+      // Navigate to checkout page
+      router.push(`/user/checkout?appointmentId=${bookingData.id}`);
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      alert("Failed to book appointment. Please try again.");
+    }
   };
 
   const handleSendMessage = () => {
@@ -236,6 +326,9 @@ export default function EventDetailPage() {
           disabled={!isAvailable}
         >
           {day}
+          {isAvailable && !isSelected && (
+            <div className="w-1 h-1 bg-blue-600 rounded-full mx-auto mt-1"></div>
+          )}
         </button>
       );
     }
@@ -250,13 +343,28 @@ export default function EventDetailPage() {
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+  // Calculate duration from description (temporary solution)
+  const durationMatch = service.description.match(/(\d+)-minute/);
+  const duration = durationMatch ? parseInt(durationMatch[1]) : 30;
+
+  // Default image for service
+  const defaultImage = "https://placebear.com/800/600";
+
   return (
     <div className="max-w-6xl mx-auto p-4">
+      <button 
+        onClick={() => router.back()}
+        className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
+      >
+        <ChevronLeft size={20} />
+        <span>Back</span>
+      </button>
+
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="h-64 overflow-hidden">
           <img 
-            src={event.image} 
-            alt={event.title} 
+            src={defaultImage} 
+            alt={service.name} 
             className="w-full h-full object-cover"
           />
         </div>
@@ -264,13 +372,10 @@ export default function EventDetailPage() {
         <div className="p-6">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{event.title}</h1>
-              <p className="text-gray-600 mb-4">Provided by {event.provider}</p>
+              <h1 className="text-3xl font-bold mb-2">{service.name}</h1>
+              <p className="text-gray-600 mb-4">Provided by {provider.businessName || provider.fullName}</p>
             </div>
             <div className="flex items-center gap-4">
-              <span className="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-sm">
-                {event.category}
-              </span>
               <button
                 onClick={() => setIsChatOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
@@ -285,21 +390,17 @@ export default function EventDetailPage() {
             {/* Left Column - Event Details */}
             <div>
               <h2 className="text-xl font-semibold mb-3">About this service</h2>
-              <p className="text-gray-700 mb-4">{event.longDescription}</p>
+              <p className="text-gray-700 mb-4">{service.description}</p>
               
               <div className="flex flex-col gap-4 mt-6">
                 <div className="flex items-center">
                   <Clock className="h-5 w-5 text-gray-500 mr-2" />
-                  <span>{event.duration} minutes</span>
-                </div>
-                <div className="flex items-center">
-                  <MapPin className="h-5 w-5 text-gray-500 mr-2" />
-                  <span>{event.location}</span>
+                  <span>{duration} minutes</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-600">
-                  ${event.price} {event.allowMultipleBookings && "per session"}
+                  ${service.price} {service.allowMultipleBookings && "per session"}
                 </div>
-                {event.allowMultipleBookings && (
+                {service.allowMultipleBookings && (
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <p className="text-sm text-blue-800">
                       ✓ You can select multiple time slots for this service
@@ -357,39 +458,70 @@ export default function EventDetailPage() {
                       day: 'numeric' 
                     })}
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {getSlotsForDate(selectedDate).map(slot => (
-                      <button
-                        key={slot.id}
-                        onClick={() => handleSlotSelect(slot.id)}
-                        className={`py-2 px-4 border rounded-lg text-sm transition-colors ${
-                          selectedSlots.includes(slot.id)
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white hover:bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        {slot.time}
-                      </button>
-                    ))}
-                  </div>
+                  {availableSlots.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-2">
+                      {availableSlots.map(slot => (
+                        <button
+                          key={slot.id}
+                          onClick={() => handleSlotSelect(slot.id)}
+                          className={`py-3 px-4 border rounded-lg text-sm transition-colors flex justify-between items-center ${
+                            selectedSlots.includes(slot.id)
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-white hover:bg-gray-50 border-gray-200'
+                          }`}
+                        >
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{slot.time}</span>
+                            <span className="text-xs mt-1 opacity-75">
+                              {slot.maxConcurrentAppointments > 1 ? 
+                                `${slot.maxConcurrentAppointments - slot.currentAppointmentCount} of ${slot.maxConcurrentAppointments} spots available` : 
+                                '1 spot available'}
+                            </span>
+                          </div>
+                          {selectedSlots.includes(slot.id) && (
+                            <Check size={18} className="text-white" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      No available time slots for this date.
+                    </div>
+                  )}
                 </div>
               )}
               
               {/* Book Now Button */}
-              <button
-                onClick={handleBookNow}
-                disabled={selectedSlots.length === 0}
-                className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors ${
-                  selectedSlots.length > 0
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                {selectedSlots.length === 0 
-                  ? 'Select a time slot to book' 
-                  : `Book ${selectedSlots.length} ${selectedSlots.length === 1 ? 'slot' : 'slots'}`
-                }
-              </button>
+              <div className="space-y-4">
+                <div className="mt-4">
+                  <label htmlFor="bookingNotes" className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes for your appointment (optional)
+                  </label>
+                  <textarea
+                    id="bookingNotes"
+                    value={bookingNotes}
+                    onChange={(e) => setBookingNotes(e.target.value)}
+                    placeholder="Add any special requests or information for your appointment..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                  />
+                </div>
+                
+                <button
+                  onClick={handleBookNow}
+                  disabled={selectedSlots.length === 0}
+                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors ${
+                    selectedSlots.length > 0
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  {selectedSlots.length === 0 
+                    ? 'Select a time slot to book' 
+                    : `Book ${selectedSlots.length} ${selectedSlots.length === 1 ? 'slot' : 'slots'}`
+                  }
+                </button>
+              </div>
             </div>
           </div>
         </div>

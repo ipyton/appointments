@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
+import Calendar from "@/apis/Calendar";
 import { 
   ChevronLeftIcon, 
   ChevronRightIcon,
@@ -117,7 +118,7 @@ export default function ProviderCalendarPage() {
   const [scheduledTimeRanges, setScheduledTimeRanges] = useState<ScheduledTimeRange[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-  // Set isClient to true on component mount
+  // Set isClient to true on component mount and fetch calendar data
   useEffect(() => {
     setIsClient(true);
     
@@ -140,6 +141,9 @@ export default function ProviderCalendarPage() {
         console.error("Error loading scheduled time ranges:", e);
       }
     }
+
+    // Fetch calendar data
+    fetchCalendarData(currentDate, view);
   }, []);
   
   // Save scheduled time ranges to localStorage when they change
@@ -193,6 +197,33 @@ export default function ProviderCalendarPage() {
     const period = hour >= 12 ? 'PM' : 'AM';
     const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
     return `${formattedHour}:${minutes} ${period}`;
+  };
+  
+  // Fetch calendar data from API
+  const fetchCalendarData = async (date: Date, calendarView: string) => {
+    try {
+      // Convert view type to match backend requirements
+      let type = "month";
+      if (calendarView === "timeGridWeek") type = "week";
+      if (calendarView === "timeGridDay") type = "day";
+      
+      // For month view, use the first day of the current month
+      let requestDate = new Date(date);
+      if (type === "month") {
+        requestDate = new Date(date.getFullYear(), date.getMonth(), 1);
+      }
+      
+      const response = await Calendar.getCalendar(requestDate, type);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Calendar data fetched:", data);
+        // We'll update this once you provide the return format
+      } else {
+        console.error("Failed to fetch calendar data:", await response.text());
+      }
+    } catch (error) {
+      console.error("Error fetching calendar data:", error);
+    }
   };
 
   // Apply template to selected days
@@ -437,6 +468,13 @@ export default function ProviderCalendarPage() {
                   left: 'prev,next today',
                   center: 'title',
                   right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                }}
+                datesSet={(dateInfo) => {
+                  const newDate = dateInfo.start;
+                  const newView = dateInfo.view.type;
+                  setCurrentDate(newDate);
+                  setView(newView as "dayGridMonth" | "timeGridWeek" | "timeGridDay");
+                  fetchCalendarData(newDate, newView);
                 }}
                 events={events}
                 selectable={!isTemplateMode}

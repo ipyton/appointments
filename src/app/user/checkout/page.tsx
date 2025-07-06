@@ -4,6 +4,40 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import Appointment from "@/apis/Appointment";
+import Service from "@/apis/Service";
+
+// Interface for appointment data
+interface AppointmentData {
+  id: number;
+  serviceId: number;
+  userId: string;
+  providerId: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  createdAt: string;
+}
+
+// Interface for service data
+interface ServiceData {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  providerId: string;
+  duration: number;
+  image?: string;
+}
+
+// Interface for provider data
+interface ProviderData {
+  id: string;
+  fullName: string;
+  businessName: string;
+  email: string;
+  phoneNumber: string | null;
+}
 
 // Mock event data (same as in events page)
 const MOCK_EVENTS = [
@@ -116,11 +150,11 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const eventId = searchParams.get('eventId');
-  const slotId = searchParams.get('slotId');
+  const appointmentId = searchParams.get('appointmentId');
   
-  const [event, setEvent] = useState<any>(null);
-  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [appointment, setAppointment] = useState<AppointmentData | null>(null);
+  const [service, setService] = useState<ServiceData | null>(null);
+  const [provider, setProvider] = useState<ProviderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [formData, setFormData] = useState({
@@ -135,25 +169,50 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   
   useEffect(() => {
-    if (!eventId || !slotId) {
+    if (!appointmentId) {
       router.push('/user/events');
       return;
     }
     
-    // In a real app, this would be an API call
-    // Simulating API fetch with timeout
-    setTimeout(() => {
-      const foundEvent = MOCK_EVENTS.find(e => e.id === eventId);
-      
-      if (foundEvent) {
-        const foundSlot = foundEvent.availableSlots.find((s: any) => s.id === slotId);
-        setEvent(foundEvent);
-        setSelectedSlot(foundSlot || null);
+    const fetchAppointmentData = async () => {
+      try {
+        // In a real app, you would fetch the appointment data from your API
+        // For now, we'll simulate this with a timeout
+        setTimeout(async () => {
+          // Simulate appointment data
+          const mockAppointment = {
+            id: parseInt(appointmentId),
+            serviceId: 1, // This would come from your API
+            userId: user?.id || '',
+            providerId: 'provider-123',
+            startTime: new Date().toISOString(),
+            endTime: new Date(Date.now() + 3600000).toISOString(), // 1 hour later
+            status: 'pending',
+            createdAt: new Date().toISOString()
+          };
+          
+          setAppointment(mockAppointment);
+          
+          // Fetch service details
+          try {
+            const serviceResponse = await Service.getEventById(mockAppointment.serviceId);
+            const serviceData = await serviceResponse.json();
+            setService(serviceData.service);
+            setProvider(serviceData.provider);
+          } catch (error) {
+            console.error("Error fetching service details:", error);
+          }
+          
+          setLoading(false);
+        }, 500);
+      } catch (error) {
+        console.error("Error fetching appointment data:", error);
+        setLoading(false);
       }
-      
-      setLoading(false);
-    }, 500);
-  }, [eventId, slotId, router]);
+    };
+    
+    fetchAppointmentData();
+  }, [appointmentId, router, user]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -166,19 +225,58 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!event || !selectedSlot) {
+    if (!service || !appointment) {
       return;
     }
     
     setIsProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // In a real app, this would make an API call to process payment and create booking
-    
-    // Redirect to success page
-    router.push('/user/bookings');
+    // Prepare payment data
+    const paymentData = {
+      paymentMethod,
+      amount: service.price * 1.1, // Including tax
+      currency: 'USD',
+      contactInfo: {
+        email: formData.email,
+        phone: formData.phone
+      },
+      specialRequests: formData.specialRequests,
+      cardDetails: paymentMethod === 'card' ? {
+        cardNumber: formData.cardNumber,
+        cardName: formData.cardName,
+        expiryDate: formData.expiryDate,
+        cvv: formData.cvv
+      } : undefined,
+      serviceDetails: {
+        serviceId: service.id,
+        serviceName: service.name,
+        providerId: provider?.id,
+        providerName: provider?.businessName || provider?.fullName,
+        duration: service.duration,
+        startTime: appointment.startTime,
+        endTime: appointment.endTime
+      }
+    };
+
+    try {
+      // Call the payment API
+      const response = await Appointment.payAppointment(appointment.id, paymentData);
+      
+      if (response.ok) {
+        // Redirect to success page
+        router.push('/user/bookings');
+      } else {
+        // Handle error
+        const errorData = await response.json();
+        console.error("Payment failed:", errorData);
+        alert("Payment failed. Please try again.");
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert("An error occurred during payment. Please try again.");
+      setIsProcessing(false);
+    }
   };
   
   if (loading) {
@@ -189,11 +287,11 @@ export default function CheckoutPage() {
     );
   }
   
-  if (!event || !selectedSlot) {
+  if (!service || !appointment) {
     return (
       <div className="text-center py-10">
         <h1 className="text-2xl font-bold mb-4">Invalid Booking Request</h1>
-        <p className="text-gray-600 mb-6">The event or time slot you selected is not valid.</p>
+        <p className="text-gray-600 mb-6">The appointment you're trying to pay for is not valid.</p>
         <Link href="/user/events" className="text-blue-600 hover:underline">
           Browse events
         </Link>
@@ -213,18 +311,18 @@ export default function CheckoutPage() {
             <div className="flex items-start gap-4 mb-6">
               <div className="w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
                 <img 
-                  src={event.image} 
-                  alt={event.title} 
+                  src={service.image || "https://placehold.co/600x400?text=" + encodeURIComponent(service.name)} 
+                  alt={service.name} 
                   className="w-full h-full object-cover"
                 />
               </div>
               <div>
-                <h3 className="font-semibold">{event.title}</h3>
-                <p className="text-gray-600 text-sm">Provided by {event.provider}</p>
+                <h3 className="font-semibold">{service.name}</h3>
+                <p className="text-gray-600 text-sm">Provided by {provider?.businessName || provider?.fullName}</p>
                 <div className="mt-2 text-sm">
-                  <p>Date: {new Date(selectedSlot.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  <p>Time: {selectedSlot.time}</p>
-                  <p>Duration: {event.duration} minutes</p>
+                  <p>Date: {new Date(appointment.startTime).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p>Time: {new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(appointment.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p>Duration: {service.duration || Math.round((new Date(appointment.endTime).getTime() - new Date(appointment.startTime).getTime()) / 60000)} minutes</p>
                 </div>
               </div>
             </div>
@@ -375,18 +473,18 @@ export default function CheckoutPage() {
             <div className="space-y-3 mb-4">
               <div className="flex justify-between">
                 <span>Service Fee</span>
-                <span>${event.price.toFixed(2)}</span>
+                <span>${service.price.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Tax</span>
-                <span>${(event.price * 0.1).toFixed(2)}</span>
+                <span>${(service.price * 0.1).toFixed(2)}</span>
               </div>
             </div>
             
             <div className="border-t border-gray-200 pt-3 mb-4">
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span>${(event.price * 1.1).toFixed(2)}</span>
+                <span>${(service.price * 1.1).toFixed(2)}</span>
               </div>
             </div>
             
