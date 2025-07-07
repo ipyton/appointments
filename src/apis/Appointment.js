@@ -13,7 +13,7 @@ export default class Appointment {
     });
   }
 
-  static async bookAppointment(serviceId, startTime, templateId, slotId, dayId, segmentId, notes) {
+  static async bookAppointment(serviceId, startTime, templateId, slotId, dayId, segmentId, notes, contactEmail, contactPhone) {
     const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
     
     return fetch(`${URL}/appointment/book`, {
@@ -25,7 +25,9 @@ export default class Appointment {
         slotId,
         dayId,
         segmentId,
-        notes
+        notes,
+        contactEmail,
+        contactPhone
       }),
       headers: {
         "Content-Type": "application/json",

@@ -161,10 +161,7 @@ export default function CheckoutPage() {
     cardNumber: '',
     cardName: '',
     expiryDate: '',
-    cvv: '',
-    email: user?.email || '',
-    phone: '',
-    specialRequests: ''
+    cvv: ''
   });
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -236,26 +233,13 @@ export default function CheckoutPage() {
       paymentMethod,
       amount: service.price * 1.1, // Including tax
       currency: 'USD',
-      contactInfo: {
-        email: formData.email,
-        phone: formData.phone
-      },
-      specialRequests: formData.specialRequests,
       cardDetails: paymentMethod === 'card' ? {
         cardNumber: formData.cardNumber,
         cardName: formData.cardName,
         expiryDate: formData.expiryDate,
         cvv: formData.cvv
       } : undefined,
-      serviceDetails: {
-        serviceId: service.id,
-        serviceName: service.name,
-        providerId: provider?.id,
-        providerName: provider?.businessName || provider?.fullName,
-        duration: service.duration,
-        startTime: appointment.startTime,
-        endTime: appointment.endTime
-      }
+      appointmentId: appointment.id,
     };
 
     try {
@@ -324,45 +308,6 @@ export default function CheckoutPage() {
                   <p>Time: {new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(appointment.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   <p>Duration: {service.duration || Math.round((new Date(appointment.endTime).getTime() - new Date(appointment.startTime).getTime()) / 60000)} minutes</p>
                 </div>
-              </div>
-            </div>
-            
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-3">Contact Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Special Requests (Optional)</label>
-                <textarea
-                  name="specialRequests"
-                  value={formData.specialRequests}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
               </div>
             </div>
             

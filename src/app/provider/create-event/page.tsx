@@ -27,6 +27,9 @@ export default function CreateEventPage() {
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState(60);
   const [price, setPrice] = useState("");
+  const [needsApproval, setNeedsApproval] = useState(false);
+  const [maxAppointmentsPerSlot, setMaxAppointmentsPerSlot] = useState("1");
+  const [minimumInformHours, setMinimumInformHours] = useState("24");
   const [eventImage, setEventImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   
@@ -327,6 +330,9 @@ export default function CreateEventPage() {
           description,
           duration,
           price: parseFloat(price),
+          needsApproval,
+          maxAppointmentsPerSlot: parseInt(maxAppointmentsPerSlot),
+          minimumInformHours: parseInt(minimumInformHours),
           dateSlots: generatedDateSlots,
           providerId: user?.id,
           isActive: true,
@@ -401,6 +407,12 @@ export default function CreateEventPage() {
           setDuration={setDuration}
           price={price}
           setPrice={setPrice}
+          needsApproval={needsApproval}
+          setNeedsApproval={setNeedsApproval}
+          maxAppointmentsPerSlot={maxAppointmentsPerSlot}
+          setMaxAppointmentsPerSlot={setMaxAppointmentsPerSlot}
+          minimumInformHours={minimumInformHours}
+          setMinimumInformHours={setMinimumInformHours}
           itemVariants={itemVariants}
         />
 

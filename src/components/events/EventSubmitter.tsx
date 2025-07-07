@@ -9,6 +9,9 @@ export interface EventData {
   description: string;
   duration: number;
   price: string | number;
+  needsApproval?: boolean;
+  maxAppointmentsPerSlot?: number | string;
+  minimumInformHours?: number | string;
   eventImage: File | null;
   startDate: string;
   scheduleData: any[];
@@ -28,6 +31,9 @@ export const useSubmitEvent = () => {
     description,
     duration,
     price,
+    needsApproval,
+    maxAppointmentsPerSlot,
+    minimumInformHours,
     eventImage,
     startDate,
     scheduleData,
@@ -58,6 +64,13 @@ export const useSubmitEvent = () => {
         description,
         duration,
         price: typeof price === 'string' ? parseFloat(price) : price,
+        needsApproval: needsApproval || false,
+        maxAppointmentsPerSlot: typeof maxAppointmentsPerSlot === 'string' 
+          ? parseInt(maxAppointmentsPerSlot) 
+          : maxAppointmentsPerSlot || 1,
+        minimumInformHours: typeof minimumInformHours === 'string'
+          ? parseInt(minimumInformHours)
+          : minimumInformHours || 24,
         startDate,
         scheduleData,
         repeatConfig
@@ -209,7 +222,14 @@ export const EventSubmitter: React.FC<{
       // Format data for API
       const formattedData = {
         ...eventData,
-        price: typeof eventData.price === 'string' ? parseFloat(eventData.price) : eventData.price
+        price: typeof eventData.price === 'string' ? parseFloat(eventData.price) : eventData.price,
+        needsApproval: eventData.needsApproval || false,
+        maxAppointmentsPerSlot: typeof eventData.maxAppointmentsPerSlot === 'string' 
+          ? parseInt(eventData.maxAppointmentsPerSlot) 
+          : eventData.maxAppointmentsPerSlot || 1,
+        minimumInformHours: typeof eventData.minimumInformHours === 'string'
+          ? parseInt(eventData.minimumInformHours)
+          : eventData.minimumInformHours || 24
       };
 
       // Submit the event data
@@ -322,6 +342,13 @@ export const submitEvent = async (eventData: EventData): Promise<{success: boole
       description: eventData.description,
       duration: eventData.duration,
       price: typeof eventData.price === 'string' ? parseFloat(eventData.price) : eventData.price,
+      needsApproval: eventData.needsApproval || false,
+      maxAppointmentsPerSlot: typeof eventData.maxAppointmentsPerSlot === 'string' 
+        ? parseInt(eventData.maxAppointmentsPerSlot) 
+        : eventData.maxAppointmentsPerSlot || 1,
+      minimumInformHours: typeof eventData.minimumInformHours === 'string'
+        ? parseInt(eventData.minimumInformHours)
+        : eventData.minimumInformHours || 24,
       startDate: eventData.startDate,
       scheduleData: eventData.scheduleData,
       repeatConfig: eventData.repeatConfig

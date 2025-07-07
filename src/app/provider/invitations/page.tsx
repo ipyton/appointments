@@ -27,42 +27,6 @@ const mockInvitations = [
     message: "I'd like to book an appointment for a regular haircut.",
     status: "pending",
     createdAt: "2023-10-15T10:30:00Z"
-  },
-  {
-    id: "2",
-    eventTitle: "Massage Therapy",
-    clientName: "Jane Smith",
-    clientEmail: "jane@example.com",
-    date: "2023-10-22",
-    startTime: "10:00",
-    endTime: "11:30",
-    message: "Looking for a deep tissue massage.",
-    status: "pending",
-    createdAt: "2023-10-16T09:15:00Z"
-  },
-  {
-    id: "3",
-    eventTitle: "Consultation",
-    clientName: "Mike Johnson",
-    clientEmail: "mike@example.com",
-    date: "2023-10-18",
-    startTime: "16:00",
-    endTime: "16:30",
-    message: "I need advice on my fitness routine.",
-    status: "accepted",
-    createdAt: "2023-10-14T14:45:00Z"
-  },
-  {
-    id: "4",
-    eventTitle: "Hair Coloring",
-    clientName: "Sarah Williams",
-    clientEmail: "sarah@example.com",
-    date: "2023-10-25",
-    startTime: "11:00",
-    endTime: "13:00",
-    message: "I'd like to get my hair colored blonde.",
-    status: "declined",
-    createdAt: "2023-10-12T16:20:00Z"
   }
 ];
 

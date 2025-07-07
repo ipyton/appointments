@@ -14,7 +14,8 @@ import {
   PencilIcon,
   TrashIcon,
   TagIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  CheckIcon
 } from "@heroicons/react/24/outline";
 import Service from "@/apis/Service";
 
@@ -38,6 +39,9 @@ interface Event {
   createdAt: string;
   updatedAt: string | null;
   allowMultipleBookings: boolean;
+  needsApproval: boolean;
+  maxAppointmentsPerSlot: number;
+  minimumInformHours: number;
   arrangements: Arrangement[];
 }
 
@@ -391,6 +395,24 @@ export default function ProviderEventsPage() {
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                       <UserGroupIcon className="h-3 w-3 mr-1" />
                       Multiple bookings
+                    </span>
+                  )}
+                  {event.maxAppointmentsPerSlot > 1 && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                      <UserGroupIcon className="h-3 w-3 mr-1" />
+                      Max {event.maxAppointmentsPerSlot} per slot
+                    </span>
+                  )}
+                  {event.needsApproval && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+                      <CheckIcon className="h-3 w-3 mr-1" />
+                      Needs approval
+                    </span>
+                  )}
+                  {event.minimumInformHours > 0 && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-50 text-cyan-700">
+                      <ClockIcon className="h-3 w-3 mr-1" />
+                      {event.minimumInformHours}h notice
                     </span>
                   )}
                 </div>

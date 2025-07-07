@@ -67,6 +67,8 @@ export default function EventDetailPage() {
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [availableDays, setAvailableDays] = useState<Record<number, number>>({});
   const [bookingNotes, setBookingNotes] = useState<string>('');
+  const [contactEmail, setContactEmail] = useState<string>('');
+  const [contactPhone, setContactPhone] = useState<string>('');
 
   const [newMessage, setNewMessage] = useState<string>('');
 
@@ -222,6 +224,11 @@ export default function EventDetailPage() {
       return;
     }
     
+    if (!contactEmail) {
+      alert("Please provide a contact email");
+      return;
+    }
+    
     const selectedSlotDetails = availableSlots.filter(slot => 
       selectedSlots.includes(slot.id)
     );
@@ -242,7 +249,9 @@ export default function EventDetailPage() {
         selectedSlot.id,  // slotId
         null,  // dayId
         null,  // segmentId
-        bookingNotes || ""  // notes
+        bookingNotes || "",  // notes
+        contactEmail,  // contactEmail
+        contactPhone || ""  // contactPhone
       );
       
       if (!response.ok) {
@@ -494,6 +503,37 @@ export default function EventDetailPage() {
               
               {/* Book Now Button */}
               <div className="space-y-4">
+                <div className="mt-4">
+                  <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                    Contact Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="contactEmail"
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="Your email address"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                    maxLength={100}
+                  />
+                </div>
+                
+                <div className="mt-4">
+                  <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Contact Phone (optional)
+                  </label>
+                  <input
+                    id="contactPhone"
+                    type="tel"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    placeholder="Your phone number"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={20}
+                  />
+                </div>
+
                 <div className="mt-4">
                   <label htmlFor="bookingNotes" className="block text-sm font-medium text-gray-700 mb-1">
                     Notes for your appointment (optional)
