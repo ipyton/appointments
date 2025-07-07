@@ -55,4 +55,29 @@ export default class Appointment {
       }
     });
   }
+
+  static async getAppointments() {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    
+    return fetch(`${URL}/appointment/getClientAppointments`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` })
+      }
+    });
+  }
+
+  static async cancelAppointment(bookingId) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    
+    return fetch(`${URL}/appointment/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ bookingId }),
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` })
+      }
+    });
+  }
 }
