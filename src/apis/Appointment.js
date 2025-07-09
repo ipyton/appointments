@@ -67,7 +67,6 @@ export default class Appointment {
       }
     });
   }
-
   static async cancelAppointment(bookingId) {
     const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
     
