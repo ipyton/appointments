@@ -14,6 +14,7 @@ export default function ChatBox() {
     isChatOpen, 
     isLoading, 
     activeChat,
+    connectionStatus,
     toggleChat, 
     sendMessage, 
     loadMessages, 
@@ -53,7 +54,6 @@ export default function ChatBox() {
 
   const fetchBusinessOwners = async () => {
     try {
-      // Use mock API for development
       const data = await Chat.getBusinessOwners(user?.token);
       setBusinessOwners(data);
       
@@ -103,7 +103,10 @@ export default function ChatBox() {
         <div className="fixed bottom-20 right-6 w-80 sm:w-96 bg-white rounded-lg shadow-xl z-10 flex flex-col max-h-[500px] border border-gray-200">
           {/* Chat header */}
           <div className="bg-blue-600 text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
-            <h3 className="font-medium">Chat</h3>
+            <div className="flex items-center space-x-2">
+              <h3 className="font-medium">Chat</h3>
+              <ConnectionStatus status={connectionStatus} />
+            </div>
             <button onClick={toggleChat} className="text-white hover:text-gray-200">
               <XMarkIcon className="h-5 w-5" />
             </button>
@@ -153,6 +156,7 @@ export default function ChatBox() {
                       <div className="text-sm">{message.content}</div>
                       <div className={`text-xs mt-1 ${isOwnMessage ? "text-blue-100" : "text-gray-500"}`}>
                         {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {!isOwnMessage && message.isRead && <span className="ml-1">✓</span>}
                       </div>
                     </div>
                   </div>
@@ -170,12 +174,12 @@ export default function ChatBox() {
               onChange={(e) => setMessageText(e.target.value)}
               placeholder="Type a message..."
               className="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              disabled={!activeChat || isLoading}
+              disabled={!activeChat || isLoading || connectionStatus !== 'connected'}
             />
             <button
               type="submit"
               className="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 disabled:bg-blue-400"
-              disabled={!messageText.trim() || !activeChat || isLoading}
+              disabled={!messageText.trim() || !activeChat || isLoading || connectionStatus !== 'connected'}
             >
               <PaperAirplaneIcon className="h-5 w-5" />
             </button>
@@ -183,5 +187,39 @@ export default function ChatBox() {
         </div>
       )}
     </>
+  );
+}
+
+// Connection status indicator component
+function ConnectionStatus({ status }: { status: string }) {
+  let color = "";
+  let title = "";
+  
+  switch(status) {
+    case 'connected':
+      color = "bg-green-500";
+      title = "Connected";
+      break;
+    case 'disconnected':
+      color = "bg-red-500";
+      title = "Disconnected";
+      break;
+    case 'reconnecting':
+      color = "bg-yellow-500";
+      title = "Reconnecting";
+      break;
+    case 'error':
+      color = "bg-red-500";
+      title = "Connection Error";
+      break;
+    default:
+      color = "bg-gray-500";
+      title = "Unknown Status";
+  }
+  
+  return (
+    <div className="flex items-center" title={title}>
+      <div className={`h-2 w-2 rounded-full ${color}`}></div>
+    </div>
   );
 } 

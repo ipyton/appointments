@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { URL } from "../apis/URL";
 import { useAuth } from "./AuthContext";
 import Chat from "../apis/Chat";
@@ -21,6 +21,7 @@ interface ChatContextType {
   isChatOpen: boolean;
   isLoading: boolean;
   activeChat: string | null;
+  connectionStatus: string;
   toggleChat: () => void;
   sendMessage: (content: string, receiverId: string) => Promise<boolean>;
   loadMessages: (businessOwnerId: string) => Promise<void>;
@@ -36,30 +37,73 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeChat, setActiveChat] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<string>('disconnected');
+  const signalRConnection = useRef<{ disconnect: () => Promise<void> } | null>(null);
   const { user } = useAuth();
 
-  // Load unread message count on mount
+  // Initialize SignalR connection when user is authenticated
   useEffect(() => {
-    if (user) {
-      fetchUnreadCount();
-      
-      // Set up polling for new messages every 30 seconds
-      const interval = setInterval(() => {
-        fetchUnreadCount();
-        if (activeChat) {
-          loadMessages(activeChat);
+    if (!user) return;
+
+    const initializeSignalR = async () => {
+      try {
+        // Clean up previous connection if exists
+        if (signalRConnection.current) {
+          await signalRConnection.current.disconnect();
         }
-      }, 30000);
-      
-      return () => clearInterval(interval);
+
+        // Set up SignalR connection with message handler
+        const connection = await Chat.connectToSignalR(
+          user.token,
+          (message: Message) => {
+            // Handle incoming message
+            if (message.senderId === activeChat || message.receiverId === user.id) {
+              setMessages(prev => [...prev, message]);
+              // Update unread count if needed
+              if (!message.isRead && message.receiverId === user.id) {
+                setUnreadCount(prev => prev + 1);
+              }
+            }
+          },
+          (status: string, error?: Error) => {
+            setConnectionStatus(status);
+            if (error) {
+              console.error("SignalR connection error:", error);
+            }
+          }
+        );
+
+        signalRConnection.current = connection;
+      } catch (error) {
+        console.error("Failed to initialize SignalR:", error);
+        setConnectionStatus('error');
+      }
+    };
+
+    initializeSignalR();
+    fetchUnreadCount();
+    
+    return () => {
+      // Clean up connection on unmount
+      if (signalRConnection.current) {
+        signalRConnection.current.disconnect().catch(err => {
+          console.error("Error disconnecting SignalR:", err);
+        });
+      }
+    };
+  }, [user]);
+
+  // Load messages when active chat changes
+  useEffect(() => {
+    if (activeChat && user) {
+      loadMessages(activeChat);
     }
-  }, [user, activeChat]);
+  }, [activeChat, user]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
     
     try {
-      // Use mock API for development
       const data = await Chat.getUnreadCount(user.token);
       setUnreadCount(data.count);
     } catch (error) {
@@ -76,8 +120,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
-      // Use mock API for development
       const data = await Chat.sendMessage(content, receiverId, user.token);
+      // The message will be added to the UI automatically through SignalR
+      // but we can also add it directly for immediate feedback
       setMessages(prev => [...prev, data]);
       return true;
     } catch (error) {
@@ -93,12 +138,21 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
-      // Use mock API for development
       const data = await Chat.getMessages(businessOwnerId, user.token);
       setMessages(data);
       setActiveChat(businessOwnerId);
       
-      // Update unread count after loading messages
+      // Mark messages from this business owner as read
+      const unreadMessages = data.filter(
+        msg => !msg.isRead && msg.senderId === businessOwnerId
+      );
+      
+      // Mark each unread message as read
+      for (const msg of unreadMessages) {
+        await markAsRead(msg.id);
+      }
+      
+      // Update unread count after marking messages as read
       fetchUnreadCount();
     } catch (error) {
       console.error("Error loading messages:", error);
@@ -111,7 +165,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     
     try {
-      // Use mock API for development
       const success = await Chat.markAsRead(messageId, user.token);
       
       if (success) {
@@ -138,6 +191,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         isChatOpen, 
         isLoading,
         activeChat,
+        connectionStatus,
         toggleChat, 
         sendMessage, 
         loadMessages, 

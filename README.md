@@ -1,3 +1,68 @@
+# Appointments App
+
+## Real-time Chat Implementation
+
+The application includes a real-time chat system implemented using:
+
+1. **SignalR** for real-time messaging
+2. **RESTful API** for message history and user management
+3. **Authentication tokens** for secure communication
+
+### Chat Features
+
+- Real-time message delivery
+- Message read receipts
+- Unread message counters
+- Connection status indicators
+- Persistent message history
+
+### Implementation Components
+
+#### Frontend
+- `ChatContext.tsx` - Provides chat state and methods to components
+- `ChatBox.tsx` - UI component for displaying and sending messages
+- `Chat.js` - API client for communication with the backend
+
+#### Backend Requirements
+The backend should implement:
+
+1. A SignalR Hub at `/chathub` endpoint
+2. REST API endpoints:
+   - GET `/chat/messages/:receiverId` - Get message history
+   - POST `/chat/send` - Send a new message
+   - PUT `/chat/read/:messageId` - Mark a message as read
+   - GET `/chat/unread/count` - Get unread message count
+   - GET `/chat/providers` - Get list of service providers
+
+### Usage Example
+
+```javascript
+// In a React component
+const { 
+  messages, 
+  sendMessage, 
+  connectionStatus 
+} = useChat();
+
+// Send a message
+await sendMessage("Hello!", receiverId);
+
+// Messages are automatically updated through SignalR
+```
+
+### Database Schema
+
+Messages should be stored with the following fields:
+- id (string) - Unique identifier
+- senderId (string) - User ID of sender
+- senderName (string) - Display name of sender
+- receiverId (string) - User ID of recipient
+- content (string) - Message content
+- timestamp (string) - ISO timestamp
+- isRead (boolean) - Read status
+
+## Other App Features
+
 # AppointEase - Appointment Scheduling Application
 
 An appointment scheduling and management system built with Next.js.

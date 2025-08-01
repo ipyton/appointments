@@ -1,132 +1,187 @@
 import { URL } from "./URL";
+import * as signalR from "@microsoft/signalr";
 
-// Mock data for development
-const mockUsers = [
-  { id: "provider1", name: "Dr. Smith", role: "ServiceProvider" },
-  { id: "provider2", name: "Dr. Johnson", role: "ServiceProvider" },
-  { id: "user1", name: "John Doe", role: "User" },
-  { id: "user2", name: "Jane Smith", role: "User" }
-];
+// SignalR connection instance
+let connection = null;
 
-const mockMessages = [
-  {
-    id: "msg1",
-    senderId: "user1",
-    senderName: "John Doe",
-    receiverId: "provider1",
-    content: "Hello, I'd like to schedule an appointment.",
-    timestamp: "2023-06-01T10:30:00Z",
-    isRead: true
-  },
-  {
-    id: "msg2",
-    senderId: "provider1",
-    senderName: "Dr. Smith",
-    receiverId: "user1",
-    content: "Hi John, I'd be happy to help. What time works for you?",
-    timestamp: "2023-06-01T10:35:00Z",
-    isRead: true
-  },
-  {
-    id: "msg3",
-    senderId: "user1",
-    senderName: "John Doe",
-    receiverId: "provider1",
-    content: "Would tomorrow at 2 PM work?",
-    timestamp: "2023-06-01T10:40:00Z",
-    isRead: false
+/**
+ * Initialize the SignalR connection
+ * @param {string} token - Authentication token
+ * @returns {signalR.HubConnection} - The SignalR connection
+ */
+const initializeSignalR = (token) => {
+  if (connection && connection.state === signalR.HubConnectionState.Connected) {
+    return connection;
   }
-];
+  
+  connection = new signalR.HubConnectionBuilder()
+    .withUrl(`https://${URL.SIGNALR_URL}/chathub`, {
+      accessTokenFactory: () => token
+    })
+    .withAutomaticReconnect()
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
 
-// Helper to simulate API delay
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  return connection;
+};
 
 const Chat = {
   // Get all messages between current user and a specific business owner
   getMessages: async (businessOwnerId, token) => {
-    // In a real app, this would make an API call with the token
-    await delay(500); // Simulate network delay
-    
-    // For demo purposes, we'll just filter the mock messages
-    // In a real app, this would be handled by the backend
-    const currentUserId = getCurrentUserId(token);
-    
-    return mockMessages.filter(msg => 
-      (msg.senderId === currentUserId && msg.receiverId === businessOwnerId) ||
-      (msg.senderId === businessOwnerId && msg.receiverId === currentUserId)
-    ).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    try {
+      const response = await fetch(`${URL.API_BASE}/chat/messages/${businessOwnerId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const messages = await response.json();
+      return messages;
+    } catch (error) {
+      console.error("Failed to fetch messages:", error);
+      throw error;
+    }
   },
   
   // Send a new message
   sendMessage: async (content, receiverId, token) => {
-    await delay(500); // Simulate network delay
-    
-    const currentUserId = getCurrentUserId(token);
-    const currentUser = mockUsers.find(u => u.id === currentUserId);
-    
-    if (!currentUser) {
-      throw new Error("User not found");
+    try {
+      const response = await fetch(`${URL.API_BASE}/chat/send`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          receiverId,
+          content,
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      throw error;
     }
-    
-    // Create a new message
-    const newMessage = {
-      id: `msg${mockMessages.length + 1}`,
-      senderId: currentUserId,
-                  senderName: currentUser.fullName,
-      receiverId,
-      content,
-      timestamp: new Date().toISOString(),
-      isRead: false
-    };
-    
-    // Add to mock messages
-    mockMessages.push(newMessage);
-    
-    return newMessage;
   },
   
   // Mark a message as read
   markAsRead: async (messageId, token) => {
-    await delay(300); // Simulate network delay
-    
-    const messageIndex = mockMessages.findIndex(msg => msg.id === messageId);
-    if (messageIndex !== -1) {
-      mockMessages[messageIndex].isRead = true;
+    try {
+      const response = await fetch(`${URL.API_BASE}/chat/read/${messageId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       return true;
+    } catch (error) {
+      console.error("Failed to mark message as read:", error);
+      return false;
     }
-    return false;
   },
   
   // Get unread message count for current user
   getUnreadCount: async (token) => {
-    await delay(300); // Simulate network delay
-    
-    const currentUserId = getCurrentUserId(token);
-    
-    const count = mockMessages.filter(msg => 
-      msg.receiverId === currentUserId && !msg.isRead
-    ).length;
-    
-    return { count };
+    try {
+      const response = await fetch(`${URL.API_BASE}/chat/unread/count`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to get unread count:", error);
+      throw error;
+    }
   },
   
   // Get all business owners (for user to select who to chat with)
   getBusinessOwners: async (token) => {
-    await delay(500); // Simulate network delay
-    
-    // Return only service providers
-    return mockUsers
-      .filter(user => user.role === "ServiceProvider")
-      .map(({ id, name }) => ({ id, name }));
+    try {
+      const response = await fetch(`${URL.API_BASE}/chat/providers`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to fetch business owners:", error);
+      throw error;
+    }
+  },
+  
+  // Connect to SignalR for real-time messaging
+  connectToSignalR: async (token, onMessageReceived, onConnectionStatusChange) => {
+    try {
+      const conn = initializeSignalR(token);
+      
+      // Register event handlers
+      conn.on("ReceiveMessage", message => {
+        if (onMessageReceived) onMessageReceived(message);
+      });
+      
+      conn.onclose(() => {
+        if (onConnectionStatusChange) onConnectionStatusChange('disconnected');
+      });
+      
+      conn.onreconnecting(() => {
+        if (onConnectionStatusChange) onConnectionStatusChange('reconnecting');
+      });
+      
+      conn.onreconnected(() => {
+        if (onConnectionStatusChange) onConnectionStatusChange('connected');
+      });
+      
+      // Start the connection if it's not already started
+      if (conn.state !== signalR.HubConnectionState.Connected) {
+        await conn.start();
+        if (onConnectionStatusChange) onConnectionStatusChange('connected');
+      }
+      
+      // Return methods to manage the connection
+      return {
+        disconnect: async () => {
+          if (conn && conn.state === signalR.HubConnectionState.Connected) {
+            await conn.stop();
+            if (onConnectionStatusChange) onConnectionStatusChange('disconnected');
+          }
+        }
+      };
+    } catch (error) {
+      console.error("SignalR connection error:", error);
+      if (onConnectionStatusChange) onConnectionStatusChange('error', error);
+      throw error;
+    }
   }
 };
-
-// Helper function to extract user ID from token
-// In a real app, this would be handled by the backend
-function getCurrentUserId(token) {
-  // For demo purposes, we'll just return a hardcoded user ID
-  // In a real app, this would decode the JWT token
-  return "user1";
-}
 
 export default Chat; 

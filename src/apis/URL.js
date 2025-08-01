@@ -5,3 +5,5 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 export const URL = isDevelopment 
   ? "http://localhost:5155" 
   : "https://appointment123456.azurewebsites.net"; // Replace with your actual production API endpoint
+
+export const SIGNALR_URL = "appointments-gwehdcaghehjcvbh.southeastasia-01.azurewebsites.net"
