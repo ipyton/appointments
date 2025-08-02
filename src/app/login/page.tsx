@@ -5,6 +5,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import GoogleLoginButton from '@/components/GoogleLoginButton';
+import GithubLoginButton from '@/components/GithubLoginButton';
+
+type UserRole = "User" | "ServiceProvider";
 
 export default function Login() {
   const { login, isLoading, user, checkLoginStatus } = useAuth();
@@ -13,6 +17,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<UserRole>("User");
   
   // Check login status on page load
   useEffect(() => {
@@ -30,7 +35,7 @@ export default function Login() {
     
     try {
       // Use the updated login function that returns success status and error message
-      const result = await login(email, password, rememberMe);
+      const result = await login(email, password, rememberMe, selectedRole);
       
       if (!result.success) {
         setError(result.message || "Failed to log in. Please check your credentials.");
@@ -39,6 +44,14 @@ export default function Login() {
     } catch (error) {
       setError("An unexpected error occurred. Please try again later.");
     }
+  };
+
+  const handleGoogleError = (message: string) => {
+    setError(message);
+  };
+
+  const handleGithubError = (message: string) => {
+    setError(message);
   };
 
   return (
@@ -162,6 +175,47 @@ export default function Login() {
                 </div>
               </div>
 
+              {/* Account Type Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Account Type
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    className={`flex flex-col items-center justify-center p-4 border rounded-md cursor-pointer transition duration-200 ease-in-out ${
+                      selectedRole === "User"
+                        ? "bg-blue-50 border-blue-500 ring-2 ring-blue-500"
+                        : "border-gray-300 hover:border-blue-500"
+                    }`}
+                    onClick={() => setSelectedRole("User")}
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${selectedRole === "User" ? "bg-blue-100" : "bg-gray-100"}`}>
+                      <svg className={`w-5 h-5 ${selectedRole === "User" ? "text-blue-600" : "text-gray-500"}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className={`text-sm font-medium ${selectedRole === "User" ? "text-blue-700" : "text-gray-800"}`}>Client</span>
+                  </div>
+                  
+                  <div
+                    className={`flex flex-col items-center justify-center p-4 border rounded-md cursor-pointer transition duration-200 ease-in-out ${
+                      selectedRole === "ServiceProvider"
+                        ? "bg-blue-50 border-blue-500 ring-2 ring-blue-500"
+                        : "border-gray-300 hover:border-blue-500"
+                    }`}
+                    onClick={() => setSelectedRole("ServiceProvider")}
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${selectedRole === "ServiceProvider" ? "bg-blue-100" : "bg-gray-100"}`}>
+                      <svg className={`w-5 h-5 ${selectedRole === "ServiceProvider" ? "text-blue-600" : "text-gray-500"}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
+                        <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
+                      </svg>
+                    </div>
+                    <span className={`text-sm font-medium ${selectedRole === "ServiceProvider" ? "text-blue-700" : "text-gray-800"}`}>Service Provider</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <input
@@ -214,26 +268,9 @@ export default function Login() {
               </div>
             </div>
             
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <button type="button" className="py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                <div className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path
-                      fill="currentColor"
-                      d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032 s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2 C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
-                    />
-                  </svg>
-                  Google
-                </div>
-              </button>
-              <button type="button" className="py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                <div className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84" />
-                  </svg>
-                  Twitter
-                </div>
-              </button>
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <GoogleLoginButton onError={handleGoogleError} className="w-full" label="Sign in with Google" defaultRole={selectedRole} />
+              <GithubLoginButton onError={handleGithubError} className="w-full" defaultRole={selectedRole} />
             </div>
           </div>
         </div>

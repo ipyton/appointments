@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ChatProvider } from "@/context/ChatContext";
 import GlobalSearchButton from "@/components/GlobalSearchButton";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,14 +31,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <ChatProvider>
-            {children}
-            <div className="fixed bottom-6 right-6 z-50">
-              <GlobalSearchButton />
-            </div>
-          </ChatProvider>
-        </AuthProvider>
+        <GoogleOAuthProvider clientId="890925845237-v6896jvsm3pc4heeq21e22bsptcl4egg.apps.googleusercontent.com">
+          <AuthProvider>
+            <ChatProvider>
+              {children}
+              <div className="fixed bottom-6 right-6 z-50">
+                <GlobalSearchButton />
+              </div>
+            </ChatProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

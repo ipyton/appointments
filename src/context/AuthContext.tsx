@@ -21,12 +21,14 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string, rememberMe?: boolean, role?: UserRole) => Promise<{ success: boolean; message?: string }>;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   resetPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
   checkLoginStatus: () => Promise<void>;
   updateProfile: (data: Partial<AuthUser>, avatarFile?: File | null) => Promise<{ success: boolean; message?: string }>;
+  googleLogin: (token: string, role?: UserRole) => Promise<{ success: boolean; message?: string }>;
+  githubLogin: (code: string, role?: UserRole) => Promise<{ success: boolean; message?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -111,19 +113,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // In a real app, these would make API calls to your backend
-  const login = async (email: string, password: string, rememberMe: boolean = false) => {
+  const login = async (email: string, password: string, rememberMe: boolean = false, role: UserRole = "User") => {
     setIsLoading(true);
     
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      const response = await fetch(URL + "/account/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ Email: email, Password: password, RememberMe: rememberMe }),
-      });
+      const response = await Auth.login(email, password, rememberMe, role);
       
       const data = await response.json();
       
@@ -142,6 +138,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch (error) {
       console.error("Login failed:", error);
+      return { 
+        success: false, 
+        message: "Network error. Please try again later." 
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const googleLogin = async (token: string, role: UserRole = "User") => {
+    setIsLoading(true);
+    
+    try {
+      const response = await Auth.googleLogin(token, role);
+      const data = await response.json();
+      
+      if (!response.ok || data.statusCode !== 200) {
+        setIsLoading(false);
+        return { 
+          success: false, 
+          message: data.message || "Google login failed. Please try again." 
+        };
+      }
+      
+      // Store the user data returned from the backend
+      setUser(data.user || data);  
+      
+      // Store the JWT token or session token from the backend
+      if (data.token) {
+        safeLocalStorage.setItem("User", JSON.stringify(data.user || data));
+        safeLocalStorage.setItem("token", data.token);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Google login failed:", error);
+      return { 
+        success: false, 
+        message: "Network error. Please try again later." 
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const githubLogin = async (code: string, role: UserRole = "User") => {
+    setIsLoading(true);
+    
+    try {
+      const response = await Auth.githubLogin(code, role);
+      const data = await response.json();
+      
+      if (!response.ok || data.statusCode !== 200) {
+        setIsLoading(false);
+        return { 
+          success: false, 
+          message: data.message || "GitHub login failed. Please try again." 
+        };
+      }
+      
+      setUser(data);  
+      safeLocalStorage.setItem("User", JSON.stringify(data));
+      safeLocalStorage.setItem("token", data.token);
+      
+      return { success: true };
+    } catch (error) {
+      console.error("GitHub login failed:", error);
       return { 
         success: false, 
         message: "Network error. Please try again later." 
@@ -307,6 +370,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resetPassword,
         checkLoginStatus,
         updateProfile,
+        googleLogin,
+        githubLogin,
       }}
     >
       {children}

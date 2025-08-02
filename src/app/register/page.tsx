@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import GoogleLoginButton from '@/components/GoogleLoginButton';
+import GithubLoginButton from '@/components/GithubLoginButton';
 
 export default function Register() {
   const { register, isLoading, user } = useAuth();
@@ -54,6 +56,14 @@ export default function Register() {
     } catch (error) {
       setError("An unexpected error occurred. Please try again later.");
     }
+  };
+
+  const handleGoogleError = (message: string) => {
+    setError(message);
+  };
+
+  const handleGithubError = (message: string) => {
+    setError(message);
   };
 
   return (
@@ -149,6 +159,31 @@ export default function Register() {
                 </div>
               </div>
             )}
+
+            <div className="mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-gray-50 text-gray-600 font-medium">Sign up with</span>
+                </div>
+              </div>
+              
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <GoogleLoginButton onError={handleGoogleError} className="w-full" label="Sign up with Google" />
+                <GithubLoginButton onError={handleGithubError} className="w-full" label="Sign up with GitHub" />
+              </div>
+              
+              <div className="mt-6 relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-gray-50 text-gray-600 font-medium">Or sign up with email</span>
+                </div>
+              </div>
+            </div>
             
             <form className="space-y-6" onSubmit={handleSubmit}>
               {/* User Role Selection */}

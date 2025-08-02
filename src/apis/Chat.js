@@ -48,7 +48,6 @@ const Chat = {
     }
   },
   
-  // Send a new message
   sendMessage: async (content, receiverId, token) => {
     try {
       const response = await fetch(`${URL.API_BASE}/chat/send`, {
