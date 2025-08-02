@@ -112,7 +112,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // In a real app, these would make API calls to your backend
   const login = async (email: string, password: string, rememberMe: boolean = false, role: UserRole = "User") => {
     setIsLoading(true);
     

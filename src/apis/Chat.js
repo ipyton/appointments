@@ -26,10 +26,36 @@ const initializeSignalR = (token) => {
 };
 
 const Chat = {
-  // Get all messages between current user and a specific business owner
-  getMessages: async (businessOwnerId, token) => {
+  // Get newest messages info (not all messages content)
+  getNewestMessagesInfo: async (token) => {
     try {
-      const response = await fetch(`${URL.API_BASE}/chat/messages/${businessOwnerId}`, {
+      const response = await fetch(`${URL.API_BASE}/chat/newest-messages`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to fetch newest messages info:", error);
+      throw error;
+    }
+  },
+
+  // Get messages with pagination (10 messages per request)
+  getMessages: async (senderId, receiverId, token, olderThanMessageId = null) => {
+    try {
+      let url = `${URL.API_BASE}/chat/messages?senderId=${senderId}&receiverId=${receiverId}`;
+      if (olderThanMessageId) {
+        url += `&olderThanMessageId=${olderThanMessageId}`;
+      }
+      
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'

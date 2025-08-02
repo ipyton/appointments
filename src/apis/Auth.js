@@ -1,24 +1,31 @@
+import { stringify } from "querystring";
 import { URL } from "./URL";
 
 export default class Auth {
     static async login(email, password, rememberMe, role) {
-        const response = await fetch(`${URL}/login`, {
+        const response = await fetch(`${URL}/account/login`, {
             method: 'POST',
             body: JSON.stringify({ email, password, rememberMe, role }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
         });
         return response;
     }
 
-    static async register(email, password) {
-        const response = await fetch(`${URL}/register`, {
+    static async register(email, password,role) {
+        const response = await fetch(`${URL}/account/register`, {
             method: 'POST',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, role}),
+            headers: {
+                'Content-Type': 'application/json',
+            },
         });
         return response;
     }
 
     static async logout() {
-        const response = await fetch(`${URL}/logout`, {
+        const response = await fetch(`${URL}/account/logout`, {
             method: 'POST',
         });
         return response;

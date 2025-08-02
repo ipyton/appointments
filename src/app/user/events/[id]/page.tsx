@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Clock, MapPin, MessageCircle, X, Users, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MapPin, MessageCircle, Users, Check, Star } from "lucide-react";
 import Service from "@/apis/Service";
 import Appointment from "@/apis/Appointment";
+import Event from "@/apis/Event";
 import { useRouter, useParams } from "next/navigation";
 
 // Define TypeScript interfaces
@@ -45,13 +46,6 @@ interface EventData {
   provider: ProviderData;
 }
 
-interface ChatMessage {
-  id: number;
-  sender: string;
-  text: string;
-  timestamp: Date;
-}
-
 export default function EventDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -62,15 +56,13 @@ export default function EventDetailPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [availableDays, setAvailableDays] = useState<Record<number, number>>({});
   const [bookingNotes, setBookingNotes] = useState<string>('');
   const [contactEmail, setContactEmail] = useState<string>('');
   const [contactPhone, setContactPhone] = useState<string>('');
-
-  const [newMessage, setNewMessage] = useState<string>('');
+  const [isStarred, setIsStarred] = useState<boolean>(false);
+  const [starLoading, setStarLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchEventData = async () => {
@@ -79,16 +71,6 @@ export default function EventDetailPage() {
         const data = await response.json();
         console.log("Event:", data);
         setEventData(data);
-        
-        // Initialize chat with welcome message
-        setChatMessages([
-          { 
-            id: 1, 
-            sender: 'consultant', 
-            text: `Hello! I'm here to help you with your ${data.service.name.toLowerCase()} booking. How can I assist you today?`, 
-            timestamp: new Date() 
-          }
-        ]);
         
         // Fetch slots by month to show available days on calendar
         try {
@@ -100,6 +82,18 @@ export default function EventDetailPage() {
         } catch (error) {
           console.error("Error fetching slots:", error);
         }
+        
+        // Check if event is starred
+        try {
+          const starredResponse = await Event.checkIfServiceStarred(eventId);
+          if (!starredResponse.ok) {
+            throw new Error("Failed to check starred status");
+          }
+          const starredData = await starredResponse.json();
+          setIsStarred(starredData.isStarred);
+        } catch (error) {
+          console.error("Error checking starred status:", error);
+        }
       } catch (error) {
         console.error("Error fetching event data:", error);
       } finally {
@@ -109,6 +103,26 @@ export default function EventDetailPage() {
     
     fetchEventData();
   }, [eventId]);
+
+  const handleToggleStar = async () => {
+    if (starLoading) return;
+    
+    setStarLoading(true);
+    try {
+      const response = await Event.toggleStarService(eventId);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update star status");
+      }
+      
+      setIsStarred(!isStarred);
+    } catch (error) {
+      console.error("Error toggling star:", error);
+    } finally {
+      setStarLoading(false);
+    }
+  };
 
   // Show loading state while fetching event
   if (loading || !eventData) {
@@ -270,39 +284,6 @@ export default function EventDetailPage() {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    
-    const userMessage = {
-      id: chatMessages.length + 1,
-      sender: 'user',
-      text: newMessage,
-      timestamp: new Date()
-    };
-    
-    setChatMessages(prev => [...prev, userMessage]);
-    setNewMessage('');
-    
-    // Simulate consultant response
-    setTimeout(() => {
-      const responses = [
-        "Thank you for your message! I'll help you with that right away.",
-        "That's a great question! Let me provide you with more information.",
-        "I understand your concern. Here's what I recommend...",
-        "Perfect! I can definitely help you with your booking.",
-      ];
-      
-      const consultantResponse = {
-        id: chatMessages.length + 2,
-        sender: 'consultant',
-        text: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: new Date()
-      };
-      
-      setChatMessages(prev => [...prev, consultantResponse]);
-    }, 1000);
-  };
-
   // Render calendar
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentMonth);
@@ -386,7 +367,22 @@ export default function EventDetailPage() {
             </div>
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setIsChatOpen(true)}
+                onClick={handleToggleStar}
+                className={`p-2 rounded-full transition-colors ${
+                  isStarred
+                    ? "bg-yellow-100 text-yellow-500"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+                disabled={starLoading}
+              >
+                <Star
+                  size={20}
+                  fill={isStarred ? "currentColor" : "none"}
+                  className={starLoading ? "animate-pulse" : ""}
+                />
+              </button>
+              <button
+                onClick={() => router.push(`/user/chat?providerId=${provider.id}`)}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 <MessageCircle size={16} />
@@ -567,60 +563,7 @@ export default function EventDetailPage() {
         </div>
       </div>
       
-      {/* Chat Modal */}
-      {isChatOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md h-96 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-semibold">Chat with Consultant</h3>
-              <button
-                onClick={() => setIsChatOpen(false)}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {chatMessages.map(message => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
-                      message.sender === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {message.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="p-4 border-t">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Type your message..."
-                  className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Chat Modal removed */}
     </div>
   );
 }

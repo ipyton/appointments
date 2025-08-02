@@ -73,4 +73,51 @@ export default class Event {
       }
     });
   }
+  
+  static async toggleStarService(serviceId) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    
+    // Check if the service is already starred
+    const isStarredResponse = await this.checkIfServiceStarred(serviceId);
+    const isStarredData = await isStarredResponse.json();
+    
+    // If it's already starred, unstar it; otherwise, star it
+    return (isStarredData.isStarred 
+      ?  fetch(`${URL}/services/${serviceId}/star`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+      })
+      : fetch(`${URL}/services/${serviceId}/star`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+      }));
+    
+
+  }
+  
+  static async getStarredServices() {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    
+    return fetch(`${URL}/services/starred`, {
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      }
+    });
+  }
+  
+  static async checkIfServiceStarred(serviceId) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    
+    return fetch(`${URL}/services/${serviceId}/is-starred`, {
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      }
+    });
+  }
 } 
